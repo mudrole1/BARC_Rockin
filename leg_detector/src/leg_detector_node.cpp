@@ -1,10 +1,11 @@
 // FILE: "Leg_detector_node"
-// AUTHOR: University of Birmignham
+// AUTHOR: Marco Antonio Becerra Pedraza (http://www.marcobecerrap.com)
+// COLLABORATORS: Shaun Bastable & Manolis Chiou 
 // SUMMARY: This program receives the LRF msgs and executes a leg detector algorithm 
-// > to search for persons. At the end publishes a a list with all the persons found 
+// > to search for persons. At the end publishes a a vector with all the persons found 
 // > and their position relative to the sensor.
 //
-// NOTES: The leg detector is based on the work described in:
+// NOTES: This leg detector is based on the work described in:
 // Bellotto, N. & Hu, H. 
 // Multisensor-Based Human Detection and Tracking for Mobile Service Robots 
 // IEEE Trans. on Systems, Man, and Cybernetics -- Part B, 2009, 39, 167-181
