@@ -1,0 +1,224 @@
+include "include/model_RobotDiff.inc"
+include "include/model_Human.inc"
+include "include/model_HumanManiqui.inc"
+include "include/model_Sofa1.inc"
+include "include/model_Sofa2.inc"
+include "include/model_TrashBin.inc"
+include "include/model_Table.inc"
+include "include/model_TableCircular.inc"
+include "include/model_Chair.inc"
+include "include/model_PlantPot.inc"
+include "include/laser_URG04LX.inc"
+include "include/laser_Fake.inc"
+
+
+define floorplan model
+(  
+  color "gray10"
+  boundary 1    
+  gui_nose 0
+  gui_grid 0
+  gui_move 0
+  gui_outline 0
+  gripper_return 0
+  fiducial_return 0
+  laser_return 1
+)
+
+quit_time 3600 # 1 hour of simulated time
+speedup 10
+paused 0
+resolution 0.01
+
+# configure the GUI window
+window
+(
+  size [ 700.000 660.000 ] # in pixels
+  #scale 51                 # pixels per meter
+  #center [ 0  0 ]
+  #rotate [ 30  -30 ]  			
+  scale 55                 # pixels per meter
+  center [ 0  0 ]
+  rotate [ 0  0 ]  			
+  show_data 1              # 1=on 0=off
+)
+
+# load an environment bitmap
+floorplan
+( 
+  name "room-stage"
+  size [10.000 10.000 1]
+  pose [0 0 0 0]
+  bitmap "bitmaps/map01_square.png"
+)
+
+
+
+#MODELS
+
+
+
+
+human
+(
+   name "aHuman"
+   pose [ 1 1 0 90 ]
+   laser_fake( name "laser" pose [0 0 -0.5 0] ) 
+)
+
+robot_diff
+(		  
+  name "aRobot"
+  pose [ 1 0 0 90 ] 
+  laser_urg04lx
+  (
+    name "laser"
+    pose [0.175 0 -0.7 0]
+    #ctrl "lasernoise"
+    #pose [0 0 -0.7 0]
+  ) 
+  #ctrl "wander"
+)
+
+
+maniqui
+(
+   name "man01"
+   pose [ -0.5 0 0 45 ]
+   laser_fake( name "laser" pose [0 0 -0.5 0] ) 
+)
+maniqui
+(
+   name "man07"
+   pose [ 0.5 -4.5 0 135 ]
+   laser_fake( name "laser" pose [0 0 -0.5 0] ) 
+)
+maniqui
+(
+   name "man09"
+   pose [ 2 -2 0 45 ]
+   laser_fake( name "laser" pose [0 0 -0.5 0] ) 
+)
+
+
+
+
+
+
+sofa2
+(
+   name "aSofa2"
+   pose [ -2 4.2 0 0 ]
+   laser_fake( name "laser" pose [0 0 -0.5 0] ) 
+)
+
+
+maniqui
+(
+   name "man11"
+   pose [ 4.5 4 0 0 ]
+   laser_fake( name "laser" pose [0 0 -0.5 0] ) 
+)
+
+
+sofa2
+(
+   name "aSofa3"
+   pose [ -1 1 0 180 ]
+   laser_fake( name "laser" pose [0 0 -0.5 0] ) 
+)
+#plantpot
+#(
+#   name "aPlantPot0"
+#   pose [ -4.2 4.2 0 0 ]
+#   laser_fake( name "laser" pose [0 0 -0.5 0] ) 
+#)
+plantpot
+(
+   name "aPlantPot1"
+   pose [ 4.5 -3.5 0 0 ]
+   laser_fake( name "laser" pose [0 0 -0.5 0] ) 
+)
+plantpot
+(
+   name "aPlantPot2"
+   pose [ 4.5 -1.5 0 0 ]
+   laser_fake( name "laser" pose [0 0 -0.5 0] ) 
+)
+sofa1
+(
+   name "aSofa1"
+   pose [ -4.2 2.5 0 90 ]
+   laser_fake( name "laser" pose [0 0 -0.5 0] ) 
+)
+
+table_circular
+(
+   name "aTableC"
+   pose [ 2.5 2.5 0 0 ]
+   laser_fake( name "laser" pose [0 0 -0.5 0] ) 
+)
+table
+(
+   name "aTable"
+   pose [ -2.5 -2.5 0 0 ]
+   laser_fake( name "laser" pose [0 0 -0.5 0] ) 
+)
+chair
+(
+   name "aChair"
+   pose [ -2.5 -2 0 0 ]
+   laser_fake( name "laser" pose [0 0 -0.5 0] ) 
+)
+trash_bin
+(
+   name "aTrashBin"
+   pose [ 2.5 -4.5 0 0 ]
+   laser_fake( name "laser" pose [0 0 -0.5 0] ) 
+)
+
+
+
+maniqui
+(
+   name "man02"
+   pose [ 0 4 0 90 ]
+   laser_fake( name "laser" pose [0 0 -0.5 0] ) 
+)
+maniqui
+(
+   name "man03"
+   pose [ -4 1 0 0 ]
+   laser_fake( name "laser" pose [0 0 -0.5 0] ) 
+)
+maniqui
+(
+   name "man04"
+   pose [ -4 0 0 45 ]
+   laser_fake( name "laser" pose [0 0 -0.5 0] ) 
+)
+maniqui
+(
+   name "man05"
+   pose [ -4.5 -4.5 0 45 ]
+   laser_fake( name "laser" pose [0 0 -0.5 0] ) 
+)
+maniqui
+(
+   name "man06"
+   pose [ -0.5 -4.5 0 90 ]
+   laser_fake( name "laser" pose [0 0 -0.5 0] ) 
+)
+#maniqui
+#(
+#   name "man08"
+#   pose [ 1 -2.5 0 0 ]
+#   laser_fake( name "laser" pose [0 0 -0.5 0] ) 
+#)
+maniqui
+(
+   name "man10"
+   pose [ 4 0 0 90 ]
+   laser_fake( name "laser" pose [0 0 -0.5 0] ) 
+)
+
