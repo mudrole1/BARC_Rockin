@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="state_machine" type="state_machine_task1.py" name="state_machine" output="screen" respawn="true" />
+  <node pkg="wait_button" type="wait_button" name="wait_button" output="screen" respawn="true" />
+  <node pkg="joy" type="joy_node" name="joy" output="screen" respawn="true" />
+</launch>
