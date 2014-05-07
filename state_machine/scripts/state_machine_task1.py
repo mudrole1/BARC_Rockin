@@ -4,6 +4,7 @@ import rospy
 import smach
 import smach_ros
 from std_msgs.msg import Empty, Int32, Bool, String, Float64MultiArray
+from wait_button.msg import button
 
 speech_pub = rospy.Publisher("/say", String)
 
@@ -144,7 +145,7 @@ class NavigateBedroom(smach.State):
 class Teleop(smach.State):
 	def __init__(self):
 		smach.State.__init__(self, outcomes=['True_Door','True_Enter','False'])
-		self.result_sub = rospy.Subscriber("/teleop/response", String, self.result_cb)
+		self.result_sub = rospy.Subscriber("/wait_for_button", button, self.result_cb)
 
 	def execute(self, userdata):
 		log('In state TELEOP')
@@ -153,18 +154,17 @@ class Teleop(smach.State):
 
 		while not rospy.is_shutdown():
 			if self.executed:
-				print self.destination
-				if self.destination == "Door":
+				if self.buttons.button1 == 1:
 					return 'True_Door'
-				elif self.destination == 'Enter':
+				elif self.buttons.button2 == 1:
 					return 'True_Enter'
 				else:
 					return 'False'
 			else:
-				rospy.sleep(0.2)
+				rospy.sleep(0.01)
 
 	def result_cb(self, msg):
-		self.destination = msg.data
+		self.buttons = msg
 		self.executed = True
 		
 class FaceRecognition(smach.State):
