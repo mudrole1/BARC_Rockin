@@ -54,7 +54,7 @@ class SpeechEnd(smach.State):
 	def execute(self, userdata):
 		log('In state SPEECH_END')
 
-		say('lalalalala')
+		say('Goodbye, Doctor')
 		rospy.sleep(1)
 		
 		return 'Spoken'
@@ -63,7 +63,7 @@ class NavigateDoor(smach.State):
 	def __init__(self):
 		smach.State.__init__(self, outcomes=['Succeeded','Failed'])
 		self.run_pub = rospy.Publisher("/navigate/request", String)
-		self.result_sub = rospy.Subscriber("/navigate/response", String, self.result_cb)
+		self.result_sub = rospy.Subscriber("/navigate/response", Bool, self.result_cb)
 
 	def execute(self, userdata):
 		log('In state NAVIGATE_DOOR')
@@ -82,14 +82,14 @@ class NavigateDoor(smach.State):
 				rospy.sleep(0.2)
 
 	def result_cb(self, msg):
-		self.succeeded = msg
+		self.succeeded = msg.data
 		self.executed = True
 		
 class NavigateEnter(smach.State):
 	def __init__(self):
 		smach.State.__init__(self, outcomes=['Succeeded_Follow','Succeeded_End','Failed'])
 		self.run_pub = rospy.Publisher("/navigate/request", String)
-		self.result_sub = rospy.Subscriber("/navigate/response", String, self.result_cb)
+		self.result_sub = rospy.Subscriber("/navigate/response", Bool, self.result_cb)
 
 	def execute(self, userdata):
 		log('In state NAVIGATE_ENTER')
@@ -112,14 +112,14 @@ class NavigateEnter(smach.State):
 				rospy.sleep(0.2)
 
 	def result_cb(self, msg):
-		self.succeeded = msg
+		self.succeeded = msg.data
 		self.executed = True
 		
 class NavigateBedroom(smach.State):
 	def __init__(self):
 		smach.State.__init__(self, outcomes=['Succeeded','Failed'])
 		self.run_pub = rospy.Publisher("/navigate/request", String)
-		self.result_sub = rospy.Subscriber("/navigate/response", String, self.result_cb)
+		self.result_sub = rospy.Subscriber("/navigate/response", Bool, self.result_cb)
 
 	def execute(self, userdata):
 		log('In state NAVIGATE_BEDROOM')
@@ -138,7 +138,7 @@ class NavigateBedroom(smach.State):
 				rospy.sleep(0.2)
 
 	def result_cb(self, msg):
-		self.succeeded = msg
+		self.succeeded = msg.data
 		self.executed = True
 		
 class Teleop(smach.State):
@@ -153,7 +153,8 @@ class Teleop(smach.State):
 
 		while not rospy.is_shutdown():
 			if self.executed:
-				if self.destination == 'Door':
+				print self.destination
+				if self.destination == "Door":
 					return 'True_Door'
 				elif self.destination == 'Enter':
 					return 'True_Enter'
@@ -163,12 +164,12 @@ class Teleop(smach.State):
 				rospy.sleep(0.2)
 
 	def result_cb(self, msg):
-		self.destination = msg
+		self.destination = msg.data
 		self.executed = True
 		
 class FaceRecognition(smach.State):
 	def __init__(self):
-		smach.State.__init__(self, outcomes=['Doctor'])
+		smach.State.__init__(self, outcomes=['Doctor','Unknown'])
 		self.run_pub = rospy.Publisher("/face_recognition/request", Empty)
 		self.result_sub = rospy.Subscriber("/face_recognition/response", String, self.result_cb)
 
@@ -183,11 +184,13 @@ class FaceRecognition(smach.State):
 			if self.executed:
 				if self.person == 'Doctor':
 					return self.person
+				else:
+					return 'Unknown'
 			else:
 				rospy.sleep(0.2)
 
 	def result_cb(self, msg):
-		self.person = msg
+		self.person = msg.data
 		self.executed = True
 	
 def main():
@@ -200,7 +203,7 @@ def main():
 		smach.StateMachine.add('NAVIGATE_DOOR', NavigateDoor(), transitions={'Succeeded':'FACE_RECOGNITION','Failed':'NAVIGATE_DOOR'})
 		smach.StateMachine.add('NAVIGATE_ENTER', NavigateEnter(), transitions={'Succeeded_Follow':'SPEECH_FOLLOW_ME','Succeeded_End':'SPEECH_END','Failed':'NAVIGATE_ENTER'})
 		smach.StateMachine.add('NAVIGATE_BEDROOM', NavigateBedroom(), transitions={'Succeeded':'TELEOP','Failed':'NAVIGATE_BEDROOM'})
-		smach.StateMachine.add('FACE_RECOGNITION', FaceRecognition(), transitions={'Doctor':'SPEECH_DOCTOR'})
+		smach.StateMachine.add('FACE_RECOGNITION', FaceRecognition(), transitions={'Doctor':'SPEECH_DOCTOR','Unknown':'FACE_RECOGNITION'})
 		smach.StateMachine.add('SPEECH_LEAVE_BEDROOM', SpeechLeaveBedroom(), transitions={'Spoken':'NAVIGATE_ENTER'})
 		smach.StateMachine.add('SPEECH_DOCTOR', SpeechDoctor(), transitions={'Spoken':'NAVIGATE_ENTER'})
 		smach.StateMachine.add('SPEECH_FOLLOW_ME', SpeechFollowMe(), transitions={'Spoken':'NAVIGATE_BEDROOM'})
@@ -214,7 +217,7 @@ def log(msg):
 	rospy.loginfo(msg)
 	
 def say(msg):
-	log('Saying ' + msg)
+	log('Saying \"' + msg + '\"')
 	speech_pub.publish(msg)
 
 if __name__ == '__main__':
