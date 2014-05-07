@@ -52,6 +52,7 @@ int main(int argc, char **argv)
   }
   ROS_INFO("button 2 send");
 
+    mess.button1 = 0;
     mess.button2 = 1;
 
     chatter_pub.publish(mess); 
