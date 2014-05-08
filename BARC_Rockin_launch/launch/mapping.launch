@@ -22,11 +22,6 @@
   <!--param name="linear_speed_max" value="0.4" type="double"/>
   <param name="angular_speed_max" value="0.6" type="double"/-->
   
-  <!-- Button for a Xbox 360 controller -->
-  <!--param name="control_button" value="4" type="int"/>  
-  <param name="manual_button" value="3" type="int"/>
-  <param name="stop_button" value="5" type="int"/>
-  <param name="auto_button" value="1" type="int"/-->
   
 
 <node pkg="mixed_initiative_teleop" type="mixed_initiative_teleop_node" name="dora_teleop" output="screen">
@@ -35,8 +30,7 @@
 <node pkg="mixed_initiative_controller" type="mixed_initiative_controller_node" name="mi_controller" output="screen">
 </node>
 
-<node pkg="dora_nav_goals" type="dora_nav_goals_node" name="dora_nav_goals_node" output="screen">
-</node>
+
 
   <!-- tf transform -->
   <!-- approximative measures -->
@@ -60,17 +54,10 @@
 
    <!-- gmapping -->
   <!-- SLAM algorithm -->    
-  <!--node name="slam_gmapping" pkg="gmapping" type="slam_gmapping" respawn="true" output="screen">
+  <node name="slam_gmapping" pkg="gmapping" type="slam_gmapping" respawn="true" output="screen">
     <param name="scan" type="string" value="/scan"/> 
     <param name="_odom_frame" type="string" value="odom"/>
-  </node-->
-
-<!-- Map_server to load the predefined map -->
-<arg name="map_file" default="$(find dora_nav_goals)/map/map.yaml"/>
- <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
-
-<!-- launch AMCL -->
-  <include file="$(find dora_2dnav)/launch/amcl_node.launch"/>
+  </node>
 
 
 <!-- launch move_base -->
@@ -82,12 +69,6 @@
     <rosparam file="$(find dora_2dnav)/config/base_local_planner_params_amcl.yaml" command="load" />
 <remap from="/cmd_vel" to="/navigation/cmd_vel" />
   </node>
-
-
-  <node pkg="state_machine" type="state_machine_task1.py" name="state_machine" output="screen" respawn="true" />
-
-  <node pkg="wait_button" type="wait_button" name="wait_button" output="screen" respawn="true" />
-
 
 
 </launch>

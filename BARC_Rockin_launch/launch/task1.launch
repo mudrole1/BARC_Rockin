@@ -22,12 +22,7 @@
   <!--param name="linear_speed_max" value="0.4" type="double"/>
   <param name="angular_speed_max" value="0.6" type="double"/-->
   
-  <!-- Button for a Xbox 360 controller -->
-  <!--param name="control_button" value="4" type="int"/>  
-  <param name="manual_button" value="3" type="int"/>
-  <param name="stop_button" value="5" type="int"/>
-  <param name="auto_button" value="1" type="int"/-->
-  
+   
 
 <node pkg="mixed_initiative_teleop" type="mixed_initiative_teleop_node" name="dora_teleop" output="screen">
 </node>
