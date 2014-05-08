@@ -35,7 +35,7 @@
 <node pkg="mixed_initiative_controller" type="mixed_initiative_controller_node" name="mi_controller" output="screen">
 </node>
 
-<node pkg="dora_nav_goals" type="dora_nav_goals_node" name="dora_nav_goals_node" output="screen">
+<node pkg="dora_nav_goals" type="dora_nav_goals" name="dora_nav_goals" output="screen">
 </node>
 
   <!-- tf transform -->
