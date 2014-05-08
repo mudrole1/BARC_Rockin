@@ -103,7 +103,7 @@ class NavigateDoor(smach.State):
 class NavigateEnter(smach.State):
 	def __init__(self):
 		smach.State.__init__(self, outcomes=['Succeeded_Follow','Succeeded_End','Failed'])
-		self.run_pub = rospy.Publisher("/navigate/request", String)
+		self.run_pub = rospy.Publisher("/navigate/request", named_coordinates)
 		self.result_sub = rospy.Subscriber("/navigate/response", Bool, self.result_cb)
 
 	def execute(self, userdata):
@@ -145,7 +145,7 @@ class NavigateEnter(smach.State):
 class NavigateBedroom(smach.State):
 	def __init__(self):
 		smach.State.__init__(self, outcomes=['Succeeded','Failed'])
-		self.run_pub = rospy.Publisher("/navigate/request", String)
+		self.run_pub = rospy.Publisher("/navigate/request", named_coordinates)
 		self.result_sub = rospy.Subscriber("/navigate/response", Bool, self.result_cb)
 
 	def execute(self, userdata):
