@@ -82,7 +82,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES wait_button
-#  CATKIN_DEPENDS roscpp std_msgs
+ CATKIN_DEPENDS roscpp std_msgs
 #  DEPENDS system_lib
 CATKIN_DEPENDS message_runtime
 )

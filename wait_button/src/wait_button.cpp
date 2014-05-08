@@ -9,11 +9,11 @@ bool b2=false;
 
 void chatterCallback(const sensor_msgs::Joy & msg)
 {
-  if(msg.buttons[3]==1)
+  if(msg.buttons[4]==1)
     b1=true;
-  if(msg.buttons[1]==1)
+  if(msg.buttons[5]==1)
     b2=true;
-  ROS_INFO("I heard: [%d,%d]", msg.buttons[3], msg.buttons[1]);
+  //ROS_INFO("I heard: [%d,%d]", msg.buttons[4], msg.buttons[5]);
 }
 // %EndTag(CALLBACK)%
 
