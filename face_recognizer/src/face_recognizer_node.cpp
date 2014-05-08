@@ -33,11 +33,13 @@ static void read_csv(const string& filename, vector<Mat>& images, vector<int>& l
 
 void PrintError( int ErrorID );
 void ImageCallback( const sensor_msgs::Image::ConstPtr& msg );
+void WakeUpCallback( const std_msgs::String::ConstPtr& msg );
+
 
 const int N_SAMPLES = 5; // Number of recognizing loops
 const int ERROR_ARG = 1;
 const string DATASET_FOLDER_NAME = "face_dataset";
-const int N_ARGS = 3; //<PathCascadeFILE> <PathCSVFILE>
+const int N_ARGS = 2; //<PathCascadeFILE> <PathCSVFILE>
 const int THRESHOLD_CUT = 100;
 int RecLoopCount; // The count of the recognizing loops performed...
 string PathCascade;
@@ -46,13 +48,15 @@ CascadeClassifier haar_cascade; // Face detection to be built
 Ptr<FaceRecognizer> model; // Face recognizer (classifier to e built)
 int im_width;
 int im_height;
-bool IsThereAFace = false;
+bool IsThereAFace;
 string MsgToPublish;
+bool RunFaceRecognition;
 
 
 int main( int argc, char **argv ){
   
   // Wrong arguments error
+  cout << "NARGS = " << argc << endl;
   if( argc != ( N_ARGS + 1 ) ){
      PrintError( ERROR_ARG );
     return -1;
@@ -93,18 +97,22 @@ int main( int argc, char **argv ){
   ros::NodeHandle n;  
   ros::Publisher  node_pub = n.advertise <std_msgs::String>("face_recognizer_ID", 2);
   ros::Subscriber node_sub = n.subscribe( "/camera/image_raw", 2, ImageCallback );
+  ros::Subscriber node_sub_WakeUp = n.subscribe( "/face_rec_wakeup", 2, WakeUpCallback );
 
   RecLoopCount = 0;
+  RunFaceRecognition = false;
+  IsThereAFace = false;
 
   std_msgs::String msg;
 
   while( ros::ok() ){
     if( RecLoopCount > N_SAMPLES )
       ros::shutdown();
-    if( IsThereAFace == true ){
+    if( IsThereAFace == true  && RunFaceRecognition == true ){
       //msg.data = MsgToPublish;
       msg.data = "DOCTOR";
       node_pub.publish( msg );
+      RunFaceRecognition = false;
     }
     ros::spinOnce();
   }
@@ -113,77 +121,85 @@ int main( int argc, char **argv ){
 }
 
 
+void WakeUpCallback( const std_msgs::String::ConstPtr& msg ){
+  if( ( msg->data ).compare( "DoFaceRecognition" ) == 0 )
+    RunFaceRecognition = true;
+}
+
+
 void ImageCallback( const sensor_msgs::Image::ConstPtr& msg ){
   
   IsThereAFace = false;
   
-  // ROS to OPENCV data structure conversion
-  cv_bridge::CvImagePtr cv_ptr;
-  try{
-    cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
-  }
-  catch (cv_bridge::Exception& e){
-    ROS_ERROR("cv_bridge exception: %s", e.what());
-    return;
-  }
-
-  // Create & load cascade classifier
-  bool tryflip = false;
-  CascadeClassifier cascade, nestedCascade;
-  double scale = 1;
-
-  //Get Frame & convert it to grayscale
-  Mat frame = cv_ptr->image; 
-  Mat original = frame.clone();
-  Mat gray;
-  cvtColor(original, gray, CV_BGR2GRAY); // convert frame to grayscale
- 
-  // Run face detection (Haar Cascade Filter) & save faces in a vector
-  vector< Rect_<int> > faces;
-  haar_cascade.detectMultiScale(gray, faces);
-
-  // Classification & labeling of faces
-  double confidence, BestHuman_confidence = -1;
-  int prediction, BestHuman_prediction = -1;	
-  for(int i = 0; i < faces.size(); i++) {
+  if( RunFaceRecognition == true ){ // Program has been woke up
+    // ROS to OPENCV data structure conversion
+    cv_bridge::CvImagePtr cv_ptr;
+    try{
+      cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+    }
+    catch (cv_bridge::Exception& e){
+      ROS_ERROR("cv_bridge exception: %s", e.what());
+      return;
+    }
     
-    Rect face_i = faces[i];
-    // Crop the face from the image. 
-    Mat face = gray(face_i);
-
-    // Depending on the classifier we're using (e.g. Fischer, or Eigen) we may need resizing
-    Mat face_resized;
-    cv::resize( face, face_resized, Size(im_width, im_height), 1.0, 1.0, INTER_CUBIC );
-
-    // Perform the prediction:
-    model->predict(face_resized, prediction, confidence);
-
-    if( BestHuman_prediction == -1 ){ // Just for the first case, we need new (real) values.
-      BestHuman_confidence = confidence;
-      BestHuman_prediction = prediction;
+    // Create & load cascade classifier
+    bool tryflip = false;
+    CascadeClassifier cascade, nestedCascade;
+    double scale = 1;
+    
+    //Get Frame & convert it to grayscale
+    Mat frame = cv_ptr->image; 
+    Mat original = frame.clone();
+    Mat gray;
+    cvtColor(original, gray, CV_BGR2GRAY); // convert frame to grayscale
+    
+    // Run face detection (Haar Cascade Filter) & save faces in a vector
+    vector< Rect_<int> > faces;
+    haar_cascade.detectMultiScale(gray, faces);
+    
+    // Classification & labeling of faces
+    double confidence, BestHuman_confidence = -1;
+    int prediction, BestHuman_prediction = -1;	
+    for(int i = 0; i < faces.size(); i++) {
+      
+      Rect face_i = faces[i];
+      // Crop the face from the image. 
+      Mat face = gray(face_i);
+      
+      // Depending on the classifier we're using (e.g. Fischer, or Eigen) we may need resizing
+      Mat face_resized;
+      cv::resize( face, face_resized, Size(im_width, im_height), 1.0, 1.0, INTER_CUBIC );
+      
+      // Perform the prediction:
+      model->predict(face_resized, prediction, confidence);
+      
+      if( BestHuman_prediction == -1 ){ // Just for the first case, we need new (real) values.
+	BestHuman_confidence = confidence;
+	BestHuman_prediction = prediction;
+      }
+      else if( BestHuman_prediction > prediction ){
+	BestHuman_confidence = confidence;
+	BestHuman_prediction = prediction;
+      }
+      // cout << prediction << "-" << confidence << " ";
+      // if( confidence > 123 )
+      //   prediction = 4;
     }
-    else if( BestHuman_prediction > prediction ){
-      BestHuman_confidence = confidence;
-      BestHuman_prediction = prediction;
-    }
-    // cout << prediction << "-" << confidence << " ";
-    // if( confidence > 123 )
-    //   prediction = 4;
-  }
-
-  if( BestHuman_confidence != -1 ){ // We have found at least one face to compare.
-    IsThereAFace = true;
-    if( BestHuman_confidence < THRESHOLD_CUT ){
-      MsgToPublish = "DOCTOR";
-      // cout << "MARCO :: ";
-      // cout << BestHuman_prediction << "-" << BestHuman_confidence << " ";
-      // cout << endl;
-    }
-    else{
-      MsgToPublish = "ANY";      
-      // cout << "ANY   :: ";
-      // cout << BestHuman_prediction << "-" << BestHuman_confidence << " ";
-      // cout << endl;
+    
+    if( BestHuman_confidence != -1 ){ // We have found at least one face to compare.
+      IsThereAFace = true;
+      if( BestHuman_confidence < THRESHOLD_CUT ){
+	MsgToPublish = "DOCTOR";
+	// cout << "MARCO :: ";
+	// cout << BestHuman_prediction << "-" << BestHuman_confidence << " ";
+	// cout << endl;
+      }
+      else{
+	MsgToPublish = "ANY";      
+	// cout << "ANY   :: ";
+	// cout << BestHuman_prediction << "-" << BestHuman_confidence << " ";
+	// cout << endl;
+      }
     }
   }
   
