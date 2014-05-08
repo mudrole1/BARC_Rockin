@@ -5,6 +5,7 @@ import smach
 import smach_ros
 from std_msgs.msg import Empty, Int32, Bool, String, Float64MultiArray
 from wait_button.msg import button
+from dora_nav_goals.msg import named_coordinates
 
 speech_pub = rospy.Publisher("/say", String)
 
@@ -63,15 +64,26 @@ class SpeechEnd(smach.State):
 class NavigateDoor(smach.State):
 	def __init__(self):
 		smach.State.__init__(self, outcomes=['Succeeded','Failed'])
-		self.run_pub = rospy.Publisher("/navigate/request", String)
+		self.run_pub = rospy.Publisher("/navigate/request", named_coordinates)
 		self.result_sub = rospy.Subscriber("/navigate/response", Bool, self.result_cb)
 
 	def execute(self, userdata):
 		log('In state NAVIGATE_DOOR')
 
 		self.executed = False
+		
+		msg = named_coordinates()
+		msg.pos_name = 'Door'
+		msg.goal.target_pose.header.frame_id = '/map'
+		msg.goal.target_pose.pose.position.x = 0
+		msg.goal.target_pose.pose.position.y = 0
+		msg.goal.target_pose.pose.position.z = 0
+		msg.goal.target_pose.pose.orientation.x = 0
+		msg.goal.target_pose.pose.orientation.y = 0
+		msg.goal.target_pose.pose.orientation.z = 0
+		msg.goal.target_pose.pose.orientation.w = 1
 
-		self.run_pub.publish('Door')
+		self.run_pub.publish(msg)
 
 		while not rospy.is_shutdown():
 			if self.executed:
@@ -97,7 +109,18 @@ class NavigateEnter(smach.State):
 
 		self.executed = False
 
-		self.run_pub.publish('Enter')
+		msg = named_coordinates()
+		msg.pos_name = 'Enter'
+		msg.goal.target_pose.header.frame_id = '/map'
+		msg.goal.target_pose.pose.position.x = 0
+		msg.goal.target_pose.pose.position.y = 0
+		msg.goal.target_pose.pose.position.z = 0
+		msg.goal.target_pose.pose.orientation.x = 0
+		msg.goal.target_pose.pose.orientation.y = 0
+		msg.goal.target_pose.pose.orientation.z = 0
+		msg.goal.target_pose.pose.orientation.w = 1
+
+		self.run_pub.publish(msg)
 
 		while not rospy.is_shutdown():
 			if self.executed:
@@ -127,7 +150,18 @@ class NavigateBedroom(smach.State):
 
 		self.executed = False
 
-		self.run_pub.publish('Bedroom')
+		msg = named_coordinates()
+		msg.pos_name = 'Bedroom'
+		msg.goal.target_pose.header.frame_id = '/map'
+		msg.goal.target_pose.pose.position.x = 0
+		msg.goal.target_pose.pose.position.y = 0
+		msg.goal.target_pose.pose.position.z = 0
+		msg.goal.target_pose.pose.orientation.x = 0
+		msg.goal.target_pose.pose.orientation.y = 0
+		msg.goal.target_pose.pose.orientation.z = 0
+		msg.goal.target_pose.pose.orientation.w = 1
+
+		self.run_pub.publish(msg)
 
 		while not rospy.is_shutdown():
 			if self.executed:
@@ -169,7 +203,7 @@ class Teleop(smach.State):
 		
 class FaceRecognition(smach.State):
 	def __init__(self):
-		smach.State.__init__(self, outcomes=['Doctor','Unknown'])
+		smach.State.__init__(self, outcomes=['doctor','Unknown'])
 		self.run_pub = rospy.Publisher("/face_recognition/request", Empty)
 		self.result_sub = rospy.Subscriber("/face_recognition/response", String, self.result_cb)
 
