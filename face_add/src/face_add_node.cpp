@@ -20,15 +20,12 @@ const int ERROR_ARG = 1;
 const int ERROR_MANYHUMANS = 2;
 const string DATASET_FOLDER_NAME = "face_dataset";
 const int N_ARGS = 5; //<PathCascadeNameFILE> <PathNestedCascadeNameFILE> <PathToDatasetFOLDER> <PathCVSFILE> <#Human>
-
 string PathCascadeName;
 string PathNestedCascadeName;
 string PathDataset;
 string PathCSV;
 int    NoHuman;
-
 bool IsThereAFace;
-
 int FileCount;
 
 
@@ -47,7 +44,6 @@ int main( int argc, char **argv ){
   PathCSV = string( *( argv + 4 ) );
   NoHuman = atoi( *( argv + 5 ) );
 
-
   // ARGUMENT VERIFICATION NEEDED HERE
   // ----------------------------------------
   if( ( NoHuman < 1 ) || ( NoHuman > 99 ) ){
@@ -56,6 +52,7 @@ int main( int argc, char **argv ){
   }
   if( NoHuman == 1 ) //If first human, we erase the previous CSV file
     system( ( "rm -rf " + PathCSV ).c_str() );
+  // ----------------------------------------
 
   // Building name of folder for human
   string FolderHuman = "";
@@ -77,8 +74,7 @@ int main( int argc, char **argv ){
 
   // Init ros node
   ros::init( argc, argv, "face_add_node" );
-  ros::NodeHandle n;
-  
+  ros::NodeHandle n;  
   ros:: Subscriber node_sub = n.subscribe( "/camera/image_raw", 2, ImageCallback );
 
   while( ros::ok() ){
@@ -88,9 +84,6 @@ int main( int argc, char **argv ){
   }
   return 0;
 }
-
-
-
 
 
 void ImageCallback( const sensor_msgs::Image::ConstPtr& msg ){
@@ -103,15 +96,12 @@ void ImageCallback( const sensor_msgs::Image::ConstPtr& msg ){
   catch (cv_bridge::Exception& e){
     ROS_ERROR("cv_bridge exception: %s", e.what());
     return;
-  }  
-  // The OpenCV image is in cv_ptr
-
+  }
 
   // Create & load cascade classifier
   bool tryflip = false;
   CascadeClassifier cascade, nestedCascade;
   double scale = 1;
-
 
   Mat InputFrame, OutputFace;
   if( !cascade.load( PathCascadeName ) )
@@ -122,7 +112,6 @@ void ImageCallback( const sensor_msgs::Image::ConstPtr& msg ){
   else{
     // Get Image
     InputFrame = cv_ptr->image;  
-    //cout << "R[" << InputFrame.rows << "] C[" << InputFrame.cols << "] === ";
     
     if( InputFrame.rows != 0 && InputFrame.cols != 0 ){
     
@@ -139,9 +128,7 @@ void ImageCallback( const sensor_msgs::Image::ConstPtr& msg ){
 	// Writing CSV file
 	FileName.str( "" ); // Erasing this variable
 	FileName << "echo \"" << PathDataset << "/img" << FileCount << ".png;" << ( NoHuman - 1 ) << "\" >> " << PathCSV;
-	//cout << FileName.str() << endl;
 	system( ( FileName.str() ).c_str() );
-
 	
 	// if( FileCount >= N_SAMPLES )
 	//   ros::shutdown();
@@ -185,7 +172,6 @@ void FaceDetectAndDraw( Mat& img, Mat& face, CascadeClassifier& cascade, Cascade
 				    CV_RGB(255,0,255) };
   Mat gray, smallImg( cvRound (img.rows/scale), cvRound(img.cols/scale), CV_8UC1 );
 
-
   cvtColor( img, gray, CV_BGR2GRAY );
   resize( gray, smallImg, smallImg.size(), 0, 0, INTER_LINEAR );
   equalizeHist( smallImg, smallImg );
@@ -214,11 +200,8 @@ void FaceDetectAndDraw( Mat& img, Mat& face, CascadeClassifier& cascade, Cascade
   t = (double)cvGetTickCount() - t;
   printf( "detection time = %g ms\n", t/((double)cvGetTickFrequency()*1000.) );
 
-
-  //=======================
   if( faces.size() > 0 )
     IsThereAFace = true;
-  //=======================
 
   for( vector<Rect>::const_iterator r = faces.begin(); r != faces.end(); r++, i++ ){
     Mat smallImgROI;
@@ -229,10 +212,6 @@ void FaceDetectAndDraw( Mat& img, Mat& face, CascadeClassifier& cascade, Cascade
 
     double aspect_ratio = (double)r->width/r->height;
     if( 0.75 < aspect_ratio && aspect_ratio < 1.3 ){
-      // center.x = cvRound((r->x + r->width*0.5)*scale);
-      // center.y = cvRound((r->y + r->height*0.5)*scale);
-      // radius = cvRound((r->width + r->height)*0.25*scale);
-      // circle( img, center, radius, color, 3, 8, 0 );
 
       // Copy face rectangle
       Mat M_aux ( img, Rect( r->x, r->y, r->width, r->height ) );
@@ -240,7 +219,6 @@ void FaceDetectAndDraw( Mat& img, Mat& face, CascadeClassifier& cascade, Cascade
       resize( M_aux, M_aux, Size(300, 300) );
       
       face = M_aux.clone();
-
     }
     else
       rectangle( img, cvPoint(cvRound(r->x*scale), cvRound(r->y*scale)),
@@ -248,7 +226,5 @@ void FaceDetectAndDraw( Mat& img, Mat& face, CascadeClassifier& cascade, Cascade
 		 color, 3, 8, 0);
     if( nestedCascade.empty() )
       continue;
-    
-
   }
 }

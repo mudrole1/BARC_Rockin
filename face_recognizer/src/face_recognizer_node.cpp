@@ -40,19 +40,15 @@ const string DATASET_FOLDER_NAME = "face_dataset";
 const int N_ARGS = 3; //<PathCascadeFILE> <PathCSVFILE>
 const int THRESHOLD_CUT = 100;
 int RecLoopCount; // The count of the recognizing loops performed...
-
 string PathCascade;
 string PathCSV;
-
-// Face detection to be built
-CascadeClassifier haar_cascade;
-// Face recognizer (classifier to e built)
-Ptr<FaceRecognizer> model;
-
+CascadeClassifier haar_cascade; // Face detection to be built
+Ptr<FaceRecognizer> model; // Face recognizer (classifier to e built)
 int im_width;
 int im_height;
-
 bool IsThereAFace = false;
+string MsgToPublish;
+
 
 int main( int argc, char **argv ){
   
@@ -61,11 +57,9 @@ int main( int argc, char **argv ){
      PrintError( ERROR_ARG );
     return -1;
   }
-
   // Processing arguments
   PathCascade = string( *( argv + 1 ) );
   PathCSV = string( *( argv + 2 ) );
-
   // ARGUMENT VERIFICATION NEEDED HERE
 
  
@@ -83,9 +77,8 @@ int main( int argc, char **argv ){
   im_width = images[0].cols; 
   im_height = images[0].rows;
 
-  // $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
   // Create a FaceRecognizer and train it with the dataset
-  //Ptr<FaceRecognizer> model = createFisherFaceRecognizer();
+  // model = createFisherFaceRecognizer();
   model = createLBPHFaceRecognizer();
   model->train(images, labels);
   
@@ -97,15 +90,9 @@ int main( int argc, char **argv ){
 
   // Init ros node
   ros::init( argc, argv, "face_recognizer_node" );
-  ros::NodeHandle n;
-  
+  ros::NodeHandle n;  
   ros::Publisher  node_pub = n.advertise <std_msgs::String>("face_recognizer_ID", 2);
   ros::Subscriber node_sub = n.subscribe( "/camera/image_raw", 2, ImageCallback );
-
-
-  // DESCRIPTION:
-  // --> I'm taking some pictures, and doing the recognizing. If I see mayority of some individual, I'll send the flag "known ID=#", else I'll send "unknown".
-  // First I will only print if COUT, then I'll write the publisher
 
   RecLoopCount = 0;
 
@@ -115,14 +102,15 @@ int main( int argc, char **argv ){
     if( RecLoopCount > N_SAMPLES )
       ros::shutdown();
     if( IsThereAFace == true ){
-      msg.data = "doctor";
+      //msg.data = MsgToPublish;
+      msg.data = "DOCTOR";
       node_pub.publish( msg );
     }
     ros::spinOnce();
   }
+
   return 0;
 }
-
 
 
 void ImageCallback( const sensor_msgs::Image::ConstPtr& msg ){
@@ -137,9 +125,7 @@ void ImageCallback( const sensor_msgs::Image::ConstPtr& msg ){
   catch (cv_bridge::Exception& e){
     ROS_ERROR("cv_bridge exception: %s", e.what());
     return;
-  }  
-  // The OpenCV image is in cv_ptr
-
+  }
 
   // Create & load cascade classifier
   bool tryflip = false;
@@ -165,15 +151,14 @@ void ImageCallback( const sensor_msgs::Image::ConstPtr& msg ){
     // Crop the face from the image. 
     Mat face = gray(face_i);
 
-    // Depending on the classifier we're using (e.g. Fischer, or Eigen) we might need resizing
+    // Depending on the classifier we're using (e.g. Fischer, or Eigen) we may need resizing
     Mat face_resized;
-    cv::resize(face, face_resized, Size(im_width, im_height), 1.0, 1.0, INTER_CUBIC);
+    cv::resize( face, face_resized, Size(im_width, im_height), 1.0, 1.0, INTER_CUBIC );
 
     // Perform the prediction:
-    // int prediction = model->predict(face_resized); // OLDIE! :P
     model->predict(face_resized, prediction, confidence);
 
-    if( BestHuman_prediction == -1 ){
+    if( BestHuman_prediction == -1 ){ // Just for the first case, we need new (real) values.
       BestHuman_confidence = confidence;
       BestHuman_prediction = prediction;
     }
@@ -185,17 +170,20 @@ void ImageCallback( const sensor_msgs::Image::ConstPtr& msg ){
     // if( confidence > 123 )
     //   prediction = 4;
   }
-  if( BestHuman_confidence != -1 ){
+
+  if( BestHuman_confidence != -1 ){ // We have found at least one face to compare.
     IsThereAFace = true;
     if( BestHuman_confidence < THRESHOLD_CUT ){
-      cout << "MARCO :: ";
-      cout << BestHuman_prediction << "-" << BestHuman_confidence << " ";
-      cout << endl;
+      MsgToPublish = "DOCTOR";
+      // cout << "MARCO :: ";
+      // cout << BestHuman_prediction << "-" << BestHuman_confidence << " ";
+      // cout << endl;
     }
     else{
-      cout << "ANY   :: ";
-      cout << BestHuman_prediction << "-" << BestHuman_confidence << " ";
-      cout << endl;
+      MsgToPublish = "ANY";      
+      // cout << "ANY   :: ";
+      // cout << BestHuman_prediction << "-" << BestHuman_confidence << " ";
+      // cout << endl;
     }
   }
   
@@ -208,7 +196,7 @@ void PrintError( int ErrorID ){
     cout << "ERROR: You need to run this program with the following arguments:" << endl;
     cout << "    rosrun face_recognizer face_recognizer_node <PathCascadeFILE> <PathCVSFILE>" << endl;
     break;
-    cout << "ERROR: Non recognizer error ocurred!" << endl;
+    cout << "ERROR: Non recognized error ocurred!" << endl;
     break;
   }
 }
