@@ -3,6 +3,7 @@
 import rospy
 import smach
 import smach_ros
+import os
 from std_msgs.msg import Empty, Int32, Bool, String, Float64MultiArray
 from wait_button.msg import button
 from dora_nav_goals.msg import named_coordinates
@@ -254,8 +255,10 @@ def log(msg):
 	rospy.loginfo(msg)
 	
 def say(msg):
+	os.system( 'espeak -ven+f3 \"' + msg + '\"' ); # Voice synthetizer
 	log('Saying \"' + msg + '\"')
 	speech_pub.publish(msg)
+
 
 if __name__ == '__main__':
 	main()
