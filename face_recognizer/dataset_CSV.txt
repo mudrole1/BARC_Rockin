@@ -1,0 +1,15 @@
+./dataset/s01/img01.png;0
+./dataset/s01/img02.png;0
+./dataset/s01/img03.png;0
+./dataset/s01/img04.png;0
+./dataset/s01/img05.png;0
+./dataset/s01/img06.png;0
+./dataset/s01/img07.png;0
+./dataset/s01/img08.png;0
+./dataset/s01/img09.png;0
+./dataset/s01/img10.png;0
+./dataset/s01/img11.png;0
+./dataset/s01/img12.png;0
+./dataset/s01/img13.png;0
+./dataset/s01/img14.png;0
+./dataset/s01/img15.png;0
