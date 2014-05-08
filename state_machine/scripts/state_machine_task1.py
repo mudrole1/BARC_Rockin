@@ -205,7 +205,7 @@ class FaceRecognition(smach.State):
 	def __init__(self):
 		smach.State.__init__(self, outcomes=['doctor','Unknown'])
 		self.run_pub = rospy.Publisher("/face_recognition/request", Empty)
-		self.result_sub = rospy.Subscriber("/face_recognition/response", String, self.result_cb)
+		self.result_sub = rospy.Subscriber("/face_recognizer_ID", String, self.result_cb)
 
 	def execute(self, userdata):
 		log('In state FACE_RECOGNITION')
