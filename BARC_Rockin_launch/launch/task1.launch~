@@ -22,12 +22,7 @@
   <!--param name="linear_speed_max" value="0.4" type="double"/>
   <param name="angular_speed_max" value="0.6" type="double"/-->
   
-  <!-- Button for a Xbox 360 controller -->
-  <!--param name="control_button" value="4" type="int"/>  
-  <param name="manual_button" value="3" type="int"/>
-  <param name="stop_button" value="5" type="int"/>
-  <param name="auto_button" value="1" type="int"/-->
-  
+   
 
 <node pkg="mixed_initiative_teleop" type="mixed_initiative_teleop_node" name="dora_teleop" output="screen">
 </node>
@@ -37,6 +32,19 @@
 
 <node pkg="dora_nav_goals" type="dora_nav_goals_node" name="dora_nav_goals_node" output="screen">
 </node>
+
+<!-- Set this to your camera's name -->
+  <arg name="/dev/video0" value="creative_cam" />
+
+<!-- Start the GSCAM node -->
+<env name="GSCAM_CONFIG" value="v4l2src device=/dev/video0 ! video/x-raw-yuv,framerate=30/1,width=640,height=480 ! ffmpegcolorspace " />
+<node pkg="gscam" type="gscam" name="$(arg cam_name)"/>
+
+<arg name="path_classif" default="/home/manolis/hydro_ws/src/BARC_Rockin/face_recognizer/haarcascades/haarcascade_frontalface_default.xml"/>
+<arg name="path_csv" default="/home/manolis/hydro_ws/src/BARC_Rockin/face_recognizer/dataset_CSV_marco.txt" />
+<node pkg="face_recognizer" type="face_recognizer_node" name="face_recognizer_node" args="$(arg path_classif) $(arg path_csv)" output="screen">
+</node>
+
 
   <!-- tf transform -->
   <!-- approximative measures -->
