@@ -155,14 +155,13 @@ class NavigateBedroom(smach.State):
 		msg = named_coordinates()
 		msg.pos_name = 'Bedroom'
 		msg.goal.target_pose.header.frame_id = '/map'
-		msg.goal.target_pose.header.stamp = rospy.get_rostime()
-		msg.goal.target_pose.pose.position.x = 2.18
-		msg.goal.target_pose.pose.position.y = -1.26
+		msg.goal.target_pose.pose.position.x = 0
+		msg.goal.target_pose.pose.position.y = 0
 		msg.goal.target_pose.pose.position.z = 0
 		msg.goal.target_pose.pose.orientation.x = 0
 		msg.goal.target_pose.pose.orientation.y = 0
-		msg.goal.target_pose.pose.orientation.z = -0.75
-		msg.goal.target_pose.pose.orientation.w = 0.65
+		msg.goal.target_pose.pose.orientation.z = 0
+		msg.goal.target_pose.pose.orientation.w = 1
 
 		self.run_pub.publish(msg)
 
