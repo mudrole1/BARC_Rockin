@@ -8,17 +8,21 @@ Finally, before running this program, you first need to configure & run the `gsc
 
 The complete configuration & running would be something like this:
 
-   $ export GSCAM_CONFIG="v4l2src device=/dev/video0 ! video/x-raw-rgb,framerate=30/1 ! ffmpegcolorspace"
-   $ rosrun gscam gscam
-   $ rosrun face_recognizer <ABSOLUTE_PATH_TO_FILTER_FILE> <ABSOLUTE_PATH_TO_CSV_FILE>
+      $ export GSCAM_CONFIG="v4l2src device=/dev/video0 ! video/x-raw-rgb,framerate=30/1 ! ffmpegcolorspace"
+  
+      $ rosrun gscam gscam
+  
+      $ rosrun face_recognizer <ABSOLUTE_PATH_TO_FILTER_FILE> <ABSOLUTE_PATH_TO_CSV_FILE>
 
 The parameter `/dev/video0` must be adjusted to the apropiate camera.
 
 To test it, you can publish the wake up messages manually, like this:
-   $ rostopic pub -1 /face_rec_wakeup std_msgs::String -- 'DoFaceRecognition'
+
+      $ rostopic pub -1 /face_rec_wakeup std_msgs::String -- 'DoFaceRecognition'
 
 And do echo to the `/face_recognizer_ID`:
-   $ rostopic echo /face_recognizer_ID
+
+      $ rostopic echo /face_recognizer_ID
 
 You should see a message with the class ID whenever a person is detected in front of the camera.
 
