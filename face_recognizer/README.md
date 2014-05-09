@@ -12,7 +12,7 @@ The complete configuration & running would be something like this:
   
       $ rosrun gscam gscam
   
-      $ rosrun face_recognizer <ABSOLUTE_PATH_TO_FILTER_FILE> <ABSOLUTE_PATH_TO_CSV_FILE>
+      $ rosrun face_recognizer face_recognizer_node <ABSOLUTE_PATH_TO_FILTER_FILE> <ABSOLUTE_PATH_TO_CSV_FILE>
 
 The parameter `/dev/video0` must be adjusted to the apropiate camera.
 
