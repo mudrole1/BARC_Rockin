@@ -38,6 +38,7 @@ void WakeUpCallback( const std_msgs::String::ConstPtr& msg );
 
 const int N_SAMPLES = 5; // Number of recognizing loops
 const int ERROR_ARG = 1;
+const int ERROR_WRONGCSVPATH = 2;
 const string DATASET_FOLDER_NAME = "face_dataset";
 const int N_ARGS = 2; //<PathCascadeFILE> <PathCSVFILE>
 const int THRESHOLD_CUT = 100;
@@ -56,7 +57,6 @@ bool RunFaceRecognition;
 int main( int argc, char **argv ){
   
   // Wrong arguments error
-  cout << "NARGS = " << argc << endl;
   if( argc != ( N_ARGS + 1 ) ){
      PrintError( ERROR_ARG );
     return -1;
@@ -67,7 +67,7 @@ int main( int argc, char **argv ){
   // ARGUMENT VERIFICATION NEEDED HERE
 
  
-  vector<Mat> images; //|-> These vectors hold the images and corresponding labels
+  vector<Mat> images; //|-> Dataset
   vector<int> labels; //|
   // Read CSV file
   try {
@@ -80,6 +80,13 @@ int main( int argc, char **argv ){
   // Size of imgs
   im_width = images[0].cols; 
   im_height = images[0].rows;
+
+  // Wrong images
+  if( im_width <=0 || im_height <=0 ){
+     PrintError( ERROR_WRONGCSVPATH );
+    return -1;
+  }
+
 
   // Create a FaceRecognizer and train it with the dataset
   // model = createFisherFaceRecognizer();
@@ -110,7 +117,7 @@ int main( int argc, char **argv ){
       ros::shutdown();
     if( IsThereAFace == true  && RunFaceRecognition == true ){
       //msg.data = MsgToPublish;
-      msg.data = "DOCTOR";
+      msg.data = "Doctor";
       node_pub.publish( msg );
       RunFaceRecognition = false;
     }
@@ -181,25 +188,21 @@ void ImageCallback( const sensor_msgs::Image::ConstPtr& msg ){
 	BestHuman_confidence = confidence;
 	BestHuman_prediction = prediction;
       }
-      // cout << prediction << "-" << confidence << " ";
-      // if( confidence > 123 )
-      //   prediction = 4;
     }
     
     if( BestHuman_confidence != -1 ){ // We have found at least one face to compare.
       IsThereAFace = true;
       if( BestHuman_confidence < THRESHOLD_CUT ){
-	MsgToPublish = "DOCTOR";
-	// cout << "MARCO :: ";
-	// cout << BestHuman_prediction << "-" << BestHuman_confidence << " ";
-	// cout << endl;
+	MsgToPublish = "Doctor";
+	// cout << "Doctor :: ";
       }
       else{
-	MsgToPublish = "ANY";      
-	// cout << "ANY   :: ";
+	MsgToPublish = "Unknown";      
+	// cout << "Unknown   :: ";
+      }
 	// cout << BestHuman_prediction << "-" << BestHuman_confidence << " ";
 	// cout << endl;
-      }
+
     }
   }
   
@@ -212,6 +215,10 @@ void PrintError( int ErrorID ){
     cout << "ERROR: You need to run this program with the following arguments:" << endl;
     cout << "    rosrun face_recognizer face_recognizer_node <PathCascadeFILE> <PathCVSFILE>" << endl;
     break;
+  case ERROR_WRONGCSVPATH:
+    cout << "ERROR: The path thrown from your CSV file is wrong. Maybe the CSV file has relative paths and you're not executing this program from the correct folder to have an absolute correct path" << endl;
+    break;
+  default:
     cout << "ERROR: Non recognized error ocurred!" << endl;
     break;
   }
