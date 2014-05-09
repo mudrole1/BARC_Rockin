@@ -12,9 +12,9 @@ Finally, before running this program, you first need to configure & run the `gsc
 
 The complete configuration & running would be something like this:
 
-   $ export GSCAM_CONFIG="v4l2src device=/dev/video0 ! video/x-raw-rgb,framerate=30/1 ! ffmpegcolorspace"
-   $ rosrun gscam gscam
-   $ rosrun face_add face_add_node <PATH_FILTER_FILE> <PATH_NESTEDF__FILE> <PATH_DATASET_FOLDER><PATH_CSV_FILE> <ID_NUMBER>
+      $ export GSCAM_CONFIG="v4l2src device=/dev/video0 ! video/x-raw-rgb,framerate=30/1 ! ffmpegcolorspace"
+      $ rosrun gscam gscam
+      $ rosrun face_add face_add_node <PATH_FILTER_FILE> <PATH_NESTEDF__FILE> <PATH_DATASET_FOLDER><PATH_CSV_FILE> <ID_NUMBER>
 
 The parameter `/dev/video0` must be adjusted to the apropiate camera.
 
