@@ -1,0 +1,18 @@
+<launch>
+  <!--<master auto="start"/>
+    -->
+  <!-- Run the map server -->
+  <!-- The argument is the yaml file of the map -->
+  <!--node name="map_server" pkg="map_server" type="map_server" args="$(find pioneer)/map/map2.yaml"/>
+
+  <!--- Run AMCL -->
+  <!--include file="$(find amcl)/examples/amcl_diff.launch" /-->
+
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <rosparam file="$(find dora_2dnav)/costmap_common_params.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find dora_2dnav)/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find dora_2dnav)/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find dora_2dnav)/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(find dora_2dnav)/base_local_planner_params.yaml" command="load" />
+  </node>
+</launch>

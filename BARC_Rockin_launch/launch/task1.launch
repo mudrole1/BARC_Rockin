@@ -34,16 +34,16 @@
 </node>
 
 <!-- Set this to your camera's name -->
-  <arg name="/dev/video0" value="creative_cam" />
+  <!--arg name="/dev/video0" value="creative_cam" /-->
 
 <!-- Start the GSCAM node -->
-<env name="GSCAM_CONFIG" value="v4l2src device=/dev/video0 ! video/x-raw-yuv,framerate=30/1,width=640,height=480 ! ffmpegcolorspace " />
-<node pkg="gscam" type="gscam" name="$(arg cam_name)"/>
+<!--node pkg="gscam" type="gscam" name="$(arg cam_name)"-->
+<!--node pkg="gscam" type="gscam" name="gscam"/>
 
 <arg name="path_classif" default="/home/manolis/hydro_ws/src/BARC_Rockin/face_recognizer/haarcascades/haarcascade_frontalface_default.xml"/>
 <arg name="path_csv" default="/home/manolis/hydro_ws/src/BARC_Rockin/face_recognizer/dataset_CSV.txt" />
 <node pkg="face_recognizer" type="face_recognizer_node" name="face_recognizer_node" args="$(arg path_classif) $(arg path_csv)" output="screen">
-</node>
+</node-->
 
 
   <!-- tf transform -->

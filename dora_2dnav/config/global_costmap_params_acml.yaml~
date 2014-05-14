@@ -1,0 +1,17 @@
+#Independent settings for the global planner's costmap. Detailed descriptions of these parameters can be found at http://www.ros.org/wiki/costmap_2d
+
+global_costmap: 
+
+  #Set the frame of ref. for the costmap
+  global_frame: /map
+  robot_base_frame: base_link
+
+  #Set the update and publish frequency of the costmap
+  update_frequency: 10.0
+  #publish_frequency: 0.0
+
+  #true, means that the global map for planning will come ready made from the slam algorithm 
+  static_map: true
+
+
+

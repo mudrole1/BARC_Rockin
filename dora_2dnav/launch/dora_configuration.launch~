@@ -1,0 +1,92 @@
+<launch>
+
+  <!-- RosAria -->  
+  <!-- run RosAria pioneer drivers -->
+    <node pkg="rosaria" type="RosAria" name="RosAria" >
+<param name="port" type="string" value="/dev/ttyUSB1" />
+<remap from="/RosAria/cmd_vel" to="/cmd_vel" />
+<remap from="/RosAria/pose" to="odom_pioneer" />
+</node>
+
+
+<!-- joy node -->
+  <node respawn="true" pkg="joy" type="joy_node" name="joy_node" >
+    <param name="dev" type="string" value="/dev/input/js0" />
+    <param name="deadzone" value="0.12" />
+    <param name="autorepeat_rate" type="double" value="10.0" />
+  </node>
+
+<!-- Axes -->
+  <param name="linear_axis" value="1" type="int"/>  
+  <param name="angular_axis" value="0" type="int"/>
+  <!--param name="linear_speed_max" value="0.4" type="double"/>
+  <param name="angular_speed_max" value="0.6" type="double"/-->
+  
+  <!-- Button for a Xbox 360 controller -->
+  <!--param name="control_button" value="4" type="int"/>  
+  <param name="manual_button" value="3" type="int"/>
+  <param name="stop_button" value="5" type="int"/>
+  <param name="auto_button" value="1" type="int"/-->
+  
+  <!--node pkg="dora_teleop" type="dora_teleop_node" name="dora_teleop" output="screen">
+  <remap from="/teleop_joy/cmd_vel" to="/cmd_vel" />
+</node-->
+
+<node pkg="mixed_initiative_teleop" type="mixed_initiative_teleop_node" name="dora_teleop" output="screen">
+</node>
+
+<node pkg="mixed_initiative_controller" type="mixed_initiative_controller_node" name="mi_controller" output="screen">
+</node>
+
+<!--node pkg="odom_from_pose" type="odom_from_pose_node" name="odom_from_pose" output="screen">
+</node-->
+
+  <!-- tf transform -->
+  <!-- approximative measures -->
+  <!-- args ="x y z qx qy qz frame_id child_frame_id period_in_ms" -->
+  <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser" args="0.13 0 0.22 0 0 0 base_link base_laser 100" />
+
+  <!--node pkg="tf" type="static_transform_publisher" name="base_link_to_base_sonar" args="0.13 0 0.15 0 0 0 base_link sonar_frame 100" /-->
+  
+
+  <!-- hokuyo_node -->  
+  <!-- laser scaner drivers -->
+  <node name="hokuyo" pkg="hokuyo_node" type="hokuyo_node" respawn="false" output="screen">
+    <param name="frame_id" type="string" value="base_laser"/>
+  
+    <!-- Starts up faster, but timestamps will be inaccurate. --> 
+    <param name="calibrate_time" type="bool" value="true"/> 
+    
+    <!-- Set the port to connect to here -->
+    <param name="port" type="string" value="/dev/ttyACM0"/> 
+  
+    <param name="intensity" type="bool" value="false"/>
+  </node>
+
+
+ 
+     <!--node pkg="hector_mapping" type="hector_mapping" name="hector_mapping" output="screen">
+    <param name="pub_map_odom_transform" value="true"/> 
+    <param name="scan_topic" value="scan" />
+    <param name="map_frame" value="map" />
+    <param name="base_frame" value="base_link" />
+    <param name="odom_frame" value="odom" />
+  </node-->
+
+   <!-- gmapping -->
+  <!-- SLAM algorithm -->    
+  <node name="slam_gmapping" pkg="gmapping" type="slam_gmapping" respawn="true" output="screen">
+    <param name="scan" type="string" value="/scan"/> 
+    <param name="_odom_frame" type="string" value="odom"/>
+  </node>
+
+<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <rosparam file="$(find dora_2dnav)/config/costmap_common_params.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find dora_2dnav)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find dora_2dnav)/config/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find dora_2dnav)/config/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(find dora_2dnav)/config/base_local_planner_params.yaml" command="load" />
+<remap from="/cmd_vel" to="/navigation/cmd_vel" />
+  </node>
+
+</launch>

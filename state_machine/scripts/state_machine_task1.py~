@@ -33,6 +33,9 @@ class SpeechDoctor(smach.State):
 
 		NavigateEnter.outcome = 'Follow'
 
+                say('Please, look at my camera')
+		rospy.sleep(5)
+
 		say('Hello, Doctor')
 		rospy.sleep(1)
 		
@@ -77,13 +80,13 @@ class NavigateDoor(smach.State):
 		msg.pos_name = 'Door'
 		msg.goal.target_pose.header.frame_id = '/map'
 		msg.goal.target_pose.header.stamp = rospy.get_rostime()
-		msg.goal.target_pose.pose.position.x = -3.1
-                msg.goal.target_pose.pose.position.y = -0.96
+		msg.goal.target_pose.pose.position.x = 0.51
+                msg.goal.target_pose.pose.position.y = 0.17
                 msg.goal.target_pose.pose.position.z = 0
                 msg.goal.target_pose.pose.orientation.x = 0
    		msg.goal.target_pose.pose.orientation.y = 0
-   	        msg.goal.target_pose.pose.orientation.z = -0.80
-    		msg.goal.target_pose.pose.orientation.w = 0.59
+   	        msg.goal.target_pose.pose.orientation.z = 0.84
+    		msg.goal.target_pose.pose.orientation.w = 0.54
 
 		self.run_pub.publish(msg)
 
@@ -115,13 +118,14 @@ class NavigateEnter(smach.State):
 		msg.pos_name = 'Enter'
 		msg.goal.target_pose.header.frame_id = '/map'
 		msg.goal.target_pose.header.stamp = rospy.get_rostime()
-		msg.goal.target_pose.pose.position.x = -2.2
-		msg.goal.target_pose.pose.position.y = 0.28
+
+		msg.goal.target_pose.pose.position.x = 0.95
+		msg.goal.target_pose.pose.position.y = -0.83
 		msg.goal.target_pose.pose.position.z = 0
 		msg.goal.target_pose.pose.orientation.x = 0
 		msg.goal.target_pose.pose.orientation.y = 0
-		msg.goal.target_pose.pose.orientation.z = -0.85
-		msg.goal.target_pose.pose.orientation.w = 0.52
+		msg.goal.target_pose.pose.orientation.z = 0.78
+		msg.goal.target_pose.pose.orientation.w = 0.62
 
 		self.run_pub.publish(msg)
 
@@ -145,7 +149,7 @@ class NavigateEnter(smach.State):
 class NavigateBedroom(smach.State):
 	def __init__(self):
 		smach.State.__init__(self, outcomes=['Succeeded','Failed'])
-		self.run_pub = rospy.Publisher("/navigate/request", String)
+		self.run_pub = rospy.Publisher("/navigate/request", named_coordinates)
 		self.result_sub = rospy.Subscriber("/navigate/response", Bool, self.result_cb)
 
 	def execute(self, userdata):
@@ -157,13 +161,14 @@ class NavigateBedroom(smach.State):
 		msg.pos_name = 'Bedroom'
 		msg.goal.target_pose.header.frame_id = '/map'
 		msg.goal.target_pose.header.stamp = rospy.get_rostime()
-		msg.goal.target_pose.pose.position.x = 2.18
-		msg.goal.target_pose.pose.position.y = -1.26
+
+		msg.goal.target_pose.pose.position.x = 4.75
+		msg.goal.target_pose.pose.position.y = 2.16
 		msg.goal.target_pose.pose.position.z = 0
 		msg.goal.target_pose.pose.orientation.x = 0
 		msg.goal.target_pose.pose.orientation.y = 0
-		msg.goal.target_pose.pose.orientation.z = -0.75
-		msg.goal.target_pose.pose.orientation.w = 0.65
+		msg.goal.target_pose.pose.orientation.z = -0.80
+		msg.goal.target_pose.pose.orientation.w = 0.59
 
 		self.run_pub.publish(msg)
 
@@ -209,7 +214,7 @@ class FaceRecognition(smach.State):
 	def __init__(self):
 		smach.State.__init__(self, outcomes=['Doctor','Unknown'])
 		self.run_pub = rospy.Publisher("/face_recognition/request", Empty)
-		self.result_sub = rospy.Subscriber("/face_recognizer_ID", String, self.result_cb)
+		#self.result_sub = rospy.Subscriber("/face_recognizer_ID", String, self.result_cb)
 
 	def execute(self, userdata):
 		log('In state FACE_RECOGNITION')
@@ -219,13 +224,14 @@ class FaceRecognition(smach.State):
 		self.run_pub.publish()
 
 		while not rospy.is_shutdown():
-			if self.executed:
-				if self.person == 'Doctor':
-					return self.person
-				else:
-					return 'Unknown'
-			else:
-				rospy.sleep(0.2)
+			#if self.executed:
+                                return 'Doctor'
+				#if self.person == 'Doctor':
+				#	return self.person
+				#else:
+				#	return 'Unknown'
+			#else:
+			#	rospy.sleep(0.2)
 
 	def result_cb(self, msg):
 		self.person = msg.data

@@ -31,32 +31,41 @@ int main(int argc, char **argv)
   ros::Subscriber sub = ns.subscribe("/joy", 1000, chatterCallback);   
   ros::Publisher chatter_pub = nt.advertise<wait_button::button>("/wait_for_button", 1000);
 
-  while(chatter_pub.getNumSubscribers() == 0)
+  while(ros::ok())
   {
-    ros::spinOnce();
-    loop_rate.sleep();
-  }
-  while(!b1)
-  {
-    ros::spinOnce();
-    loop_rate.sleep();
-  }
-    ROS_INFO("button 1 send");
-    mess.button1 = 1;
-
-    chatter_pub.publish(mess); 
-  while(!b2)
-  {
-    ros::spinOnce();
-    loop_rate.sleep();
-  }
-  ROS_INFO("button 2 send");
 
     mess.button1 = 0;
-    mess.button2 = 1;
+    mess.button2 = 0;
+    b1 = false;
+    b2 = false;
 
-    chatter_pub.publish(mess); 
+      while(chatter_pub.getNumSubscribers() == 0)
+      {
+        ros::spinOnce();
+        loop_rate.sleep();
+      }
+      while(!b1)
+      {
+        ros::spinOnce();
+        loop_rate.sleep();
+      }
+        ROS_INFO("button 1 send");
+        mess.button1 = 1;
 
+        chatter_pub.publish(mess);
+      while(!b2)
+      {
+        ros::spinOnce();
+        loop_rate.sleep();
+      }
+      ROS_INFO("button 2 send");
+
+        mess.button1 = 0;
+        mess.button2 = 1;
+
+        chatter_pub.publish(mess);
+        loop_rate.sleep();
+  }
   
 
   return 0;

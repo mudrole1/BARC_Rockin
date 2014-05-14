@@ -1,0 +1,58 @@
+#For full documentation of the parameters in this file, and a list of all the
+#parameters available for TrajectoryPlannerROS, please see
+#http://www.ros.org/wiki/base_local_planner
+
+# If I don't know what the acceleration limits of a robot are, I'll take the time to write a script that commands max #translational and rotational velocity to the motors for some period of time, look at the reported velocity from odometry #assuming the odometry gives a reasonable estimate of this), and derive the acceleration limits from that. Setting these #parameters reasonably often saves me a lot of time later.
+
+
+
+TrajectoryPlannerROS:
+
+  dwa: true #use the Dynamic Window Approach
+
+  global_frame_id: /map #The frame to set for the cost_cloud. Should be set to the same frame as the local costmap's global frame
+  #Set the acceleration limits of the robot in meters/sec^2  
+  acc_lim_x: 2.5
+  acc_lim_y: 2.5
+  acc_lim_th: 3.2 
+
+  #Set the velocity limits of the robot
+  max_vel_x: 0.55
+  min_vel_x: 0
+  escape_vel: -0.1
+
+  max_trans_vel: 0.55 
+  min_trans_vel: 0.1
+
+  max_rot_vel: 1
+  min_rot_vel: 0.4
+  min_in_place_rotational_vel: 0.5
+
+  #The velocity the robot will command when trying to escape from a stuck situation
+  escape_vel: -0.1
+  
+  #For this example, we'll use a holonomic robot
+  holonomic_robot: false
+
+  #Set the tolerance on achieving a goal. With bad lacalazation put hight tolerence.
+  xy_goal_tolerance: 0.10
+  yaw_goal_tolerance: 0.05 #default 0.05, maybe set highe in Jaguar to avoid oscinations?
+
+  #Forward Simulation Parameters
+  #We'll configure how long and with what granularity we'll forward simulate trajectories
+  sim_time: 1.0 # 2 * (goal_tolerance) >  ( min_vel * sime_time ) ... ore else the robot wont move
+  #sim_granularity 0.025
+
+ #The number of samples to use when exploring the x velocity space
+  vx_samples: 15 # for DWA planner 8 - 15 depending on the processing power. This allows for non-circular curves. 
+#The number of samples to use when exploring the theta velocity space 
+#vtheta_samples: 20
+
+  #Parameters for scoring trajectories in DWA
+  goal_distance_bias: 32.0 #The weighting for how much the controller should stay close to the path it was given 
+  path_distance_bias: 24.0 #The weighting for how much the controller should attempt to reach its local goal, also controls #speed 
+ 
+
+
+
+
