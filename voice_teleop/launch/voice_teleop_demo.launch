@@ -1,0 +1,82 @@
+<launch>
+
+<!-- Voice recognition -->
+<node name="recognizer" pkg="pocketsphinx" type="recognizer.py">
+    <param name="lm" value="$(find voice_teleop)/voice_cmd.lm"/>
+    <param name="dict" value="$(find voice_teleop)/voice_cmd.dic"/>
+  </node>
+
+  <node name="voice_cmd_vel" pkg="pocketsphinx" type="voice_cmd_vel.py" output="screen"/>
+
+ <!-- Voice teleop node -->
+  <node pkg="voice_teleop" type="voice_teleop_node" name="voice_teleop"/>
+
+
+<!-- RosAria pioneer drivers -->
+<node pkg="rosaria" type="RosAria" name="RosAria" >
+  <param name="port" value="/dev/ttyUSB0" />
+  <param name="trans_decel" value="0.5"/>
+  <param name="trans_accel" value="0.5"/>
+  <param name="rot_accel" value="2.0"/>
+  <remap from="/RosAria/cmd_vel" to="/cmd_vel" />
+  <remap from="/RosAria/pose" to="odom" />
+   </node>
+
+<!-- hokuyo laser scaner drivers -->
+  <node name="hokuyo" pkg="hokuyo_node" type="hokuyo_node" respawn="false" output="screen">
+    <param name="frame_id" type="string" value="base_laser"/>
+    <param name="calibrate_time" type="bool" value="true"/> <!-- Starts up slow, but accurate timestamps  --> 
+    <param name="port" type="string" value="/dev/ttyACM0"/> <!-- Set the port to connect to here -->
+    <param name="intensity" type="bool" value="false"/>
+  </node>
+
+<!-- args ="x y z qx qy qz frame_id child_frame_id period_in_ms" -->
+<node pkg="tf" type="static_transform_publisher" name="base_link_to_laser" args="0.20 0 0.20 0 0 0 base_link base_laser 50" />
+
+
+<!-- joy node -->
+  <node respawn="true" pkg="joy" type="joy_node" name="joy_node" >
+    <param name="dev" type="string" value="/dev/input/js0" />
+    <param name="deadzone" value="0.15" />
+  </node>
+
+
+<!-- teleop node -->
+<node pkg="mixed_initiative_teleop" type="mixed_initiative_teleop" name="mi_teleop" output="screen"/>
+
+
+<!-- cmd mixer for choosing autonomy mode or e.g. emergency stop if nav doesnt work good. (buttons for teleoperation - stop - autonomy mode) -->
+<!-- In xbox controller Y =  teleop , A = auto , B = stop (in any case) -->
+<node pkg="mixed_initiative_controller" type="mixed_initiative_controller" name="mi_controller" output="screen"/>
+
+
+<!-- mode and status visualising node -->
+<node pkg="status_publisher" type="status_publisher" name="status_publisher" output="screen"/>
+
+<!-- RVIZ Interface -->
+<node pkg="rviz" type="rviz" name="rviz" 
+  args="-d $(find BARC_Rockin_launch)/rviz_cfg/rviz_cfg.rviz"/>
+
+<!-- Robot Model -->
+<include file="$(find p2os_urdf)/launch/pioneer3dx_urdf.launch"/>
+
+<!-- Map_server to load the predefined map -->
+<arg name="map_file" default="$(find BARC_Rockin_launch)/map/map.yaml"/>
+ <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
+
+
+<!-- launch AMCL -->
+  <include file="$(find dora_2dnav)/launch/amcl_node.launch"/>
+
+
+<!-- launch move_base -->
+<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <rosparam file="$(find dora_2dnav)/config/costmap_common_params_amcl.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find dora_2dnav)/config/costmap_common_params_amcl.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find dora_2dnav)/config/local_costmap_params_amcl.yaml" command="load" />
+    <rosparam file="$(find dora_2dnav)/config/global_costmap_params_amcl.yaml" command="load" />
+    <rosparam file="$(find dora_2dnav)/config/base_local_planner_params_amcl.yaml" command="load" />
+<remap from="/cmd_vel" to="/navigation/cmd_vel" />
+  </node>
+
+</launch>

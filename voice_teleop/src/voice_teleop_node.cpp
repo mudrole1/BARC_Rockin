@@ -108,6 +108,10 @@ void VoiceTeleop::VoiceCmdCallback(const std_msgs::String::ConstPtr& voiceCmd)
 
     geometry_msgs::PoseStamped goal;
 
+    goal.header.frame_id = "/map";
+    goal.header.stamp = ros::Time::now() ;
+
+
     // autonomy mode choice
     if (voiceCmd->data == "right")
     {

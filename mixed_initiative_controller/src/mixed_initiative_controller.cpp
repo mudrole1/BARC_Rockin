@@ -13,6 +13,7 @@
 #include <geometry_msgs/Twist.h>
 #include "std_msgs/Bool.h"
 #include "std_msgs/Int8.h"
+#include <actionlib_msgs/GoalID.h>
 
 
 class Controller
@@ -31,9 +32,10 @@ private:
 
   ros::NodeHandle n_;
   ros::Subscriber control_mode_sub_, vel_sub_telop_, vel_sub_nav_ ;
-  ros::Publisher vel_pub_ ;
+  ros::Publisher vel_pub_ , cancelGoal_pub_, explorationCancel_pub_;
 
   geometry_msgs::Twist cmdVel_;
+  actionlib_msgs::GoalID cancelGoal_;
 
 };
 
@@ -42,8 +44,9 @@ Controller::Controller()
   valid_mode_ = true;
   control_mode_ = 0 ; //  stop/idle mode.
 
-  // Publish the velocity command
   vel_pub_ = n_.advertise<geometry_msgs::Twist>("cmd_vel", 50,this);
+  cancelGoal_pub_ = n_.advertise<actionlib_msgs::GoalID>("/move_base/cancel", 5,this);
+  explorationCancel_pub_ = n_.advertise<actionlib_msgs::GoalID>("/explore_server/cancel", 5,this);
 
   /* Subscribes to:
    * "/control_mode" to take the relevant autonomy mode
@@ -97,6 +100,14 @@ void Controller::navCallback(const geometry_msgs::Twist& msg)
       cmdVel_.angular.z = msg.angular.z;
       vel_pub_.publish(cmdVel_);
     }
+  if (control_mode_ == 0)
+    {
+      cmdVel_.linear.x = 0;
+      cmdVel_.angular.z = 0;
+      vel_pub_.publish(cmdVel_);
+      cancelGoal_pub_.publish(cancelGoal_);
+      explorationCancel_pub_.publish(cancelGoal_);
+    }
 }
 
 void Controller::teleopCallback(const geometry_msgs::Twist& msg)
@@ -106,6 +117,14 @@ void Controller::teleopCallback(const geometry_msgs::Twist& msg)
       cmdVel_.linear.x = msg.linear.x;
       cmdVel_.angular.z = msg.angular.z;
       vel_pub_.publish(cmdVel_);
+    }
+  if (control_mode_ == 0)
+    {
+      cmdVel_.linear.x = 0;
+      cmdVel_.angular.z = 0;
+      vel_pub_.publish(cmdVel_);
+      cancelGoal_pub_.publish(cancelGoal_);
+      explorationCancel_pub_.publish(cancelGoal_);
     }
 }
 

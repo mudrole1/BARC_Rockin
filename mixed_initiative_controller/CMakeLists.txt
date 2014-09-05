@@ -106,14 +106,14 @@ include_directories(
 # )
 
 ## Declare a cpp executable
- add_executable(mixed_initiative_controller_node src/mixed_initiative_controller_node.cpp)
+ add_executable(mixed_initiative_controller src/mixed_initiative_controller.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(mixed_initiative_controller_node mixed_initiative_controller_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(mixed_initiative_controller_node
+ target_link_libraries(mixed_initiative_controller
    ${catkin_LIBRARIES}
  )
 
