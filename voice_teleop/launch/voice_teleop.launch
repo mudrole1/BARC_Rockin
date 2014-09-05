@@ -1,0 +1,18 @@
+<!-- Launch file for voice teleoperation of Dora-->
+
+<launch>
+
+<!-- Voice recognition -->
+<node name="recognizer" pkg="pocketsphinx" type="recognizer.py">
+    <param name="lm" value="$(find voice_teleop)/voice_cmd.lm"/>
+    <param name="dict" value="$(find voice_teleop)/voice_cmd.dic"/>
+  </node>
+
+  <node name="voice_cmd_vel" pkg="pocketsphinx" type="voice_cmd_vel.py" output="screen"/>
+
+ <!-- Voice teleop node -->
+  <node pkg="voice_teleop" type="voice_teleop_node" name="voice_teleop" />
+   
+
+</launch>
+
