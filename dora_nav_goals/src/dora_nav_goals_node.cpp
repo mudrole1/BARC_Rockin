@@ -35,6 +35,7 @@ void NavRequestCallback(const dora_nav_goals::named_coordinatesConstPtr& msg)
         ROS_INFO("Dora successfully moved to coordinates");
         success.data = 1;
     }
+
     else
     {
         ROS_INFO("Dora failed to move properly for some reason");
@@ -62,7 +63,7 @@ int main(int argc, char** argv){
             callBack.data = 0;
         }
 
-       ros::spinOnce();
+        ros::spin();
     }
 
 
