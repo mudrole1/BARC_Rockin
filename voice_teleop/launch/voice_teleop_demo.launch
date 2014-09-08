@@ -6,10 +6,10 @@
     <param name="dict" value="$(find voice_teleop)/voice_cmd.dic"/>
   </node>
 
-  <node name="voice_cmd_vel" pkg="pocketsphinx" type="voice_cmd_vel.py" output="screen"/>
+  <!--<node name="voice_cmd_vel" pkg="pocketsphinx" type="voice_cmd_vel.py" output="screen"/>-->
 
  <!-- Voice teleop node -->
-  <node pkg="voice_teleop" type="voice_teleop_node" name="voice_teleop"/>
+ <node pkg="voice_teleop" type="voice_teleop_node" name="voice_teleop"/>
 
 
 <!-- RosAria pioneer drivers -->
@@ -55,13 +55,13 @@
 
 <!-- RVIZ Interface -->
 <node pkg="rviz" type="rviz" name="rviz" 
-  args="-d $(find BARC_Rockin_launch)/rviz_cfg/rviz_cfg.rviz"/>
+  args="-d $(find BARC_Rockin_launch)/rviz_cfg/rviz_cfg.rviz"/> 
 
 <!-- Robot Model -->
 <include file="$(find p2os_urdf)/launch/pioneer3dx_urdf.launch"/>
 
 <!-- Map_server to load the predefined map -->
-<arg name="map_file" default="$(find BARC_Rockin_launch)/map/map.yaml"/>
+<arg name="map_file" default="/home/manolis/barc_ws/src/BARC_Rockin/voice_teleop/launch/map.yaml"/>
  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
 
 

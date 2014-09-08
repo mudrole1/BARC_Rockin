@@ -65,19 +65,26 @@ Publishes to (name / type):
 #include <std_msgs/Bool.h>
 #include <std_msgs/String.h>
 
+#include <move_base_msgs/MoveBaseAction.h>
+#include <actionlib/client/simple_action_client.h>
+
+typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
+
 class VoiceTeleop
 {
 
 public:
     VoiceTeleop();
 
-private:
-    void VoiceCmdCallback(const std_msgs::String::ConstPtr& voiceCmd);
-    void PoseCmdCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& pose);
+    ros::Publisher goal_pub_;
 
+private:
+
+    void PoseCmdCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& pose);
+    //void VoiceCmdCallback(const std_msgs::String::ConstPtr& voiceCmd);
     ros::NodeHandle nh_;
 
-    ros::Publisher goal_pub_;
+
     ros::Subscriber voiceCmd_sub_, currentPose_sub_;
 
     geometry_msgs::PoseWithCovarianceStamped pose_;
@@ -85,12 +92,12 @@ private:
 };
 
 
+
 VoiceTeleop::VoiceTeleop()
 {
-
     goal_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("/move_base_simple/goal", 1);
 
-    voiceCmd_sub_ = nh_.subscribe<std_msgs::String>("/recognizer/output", 1, &VoiceTeleop::VoiceCmdCallback, this);
+   // voiceCmd_sub_ = nh_.subscribe<std_msgs::String>("/recognizer/output", 1, &VoiceTeleop::VoiceCmdCallback, this);
     currentPose_sub_ = nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>("/amcl_pose", 1, &VoiceTeleop::PoseCmdCallback, this);
 
 }
@@ -103,48 +110,93 @@ void VoiceTeleop::PoseCmdCallback(const geometry_msgs::PoseWithCovarianceStamped
 
 }
 
-void VoiceTeleop::VoiceCmdCallback(const std_msgs::String::ConstPtr& voiceCmd)
+void VoiceCmdCallback(const std_msgs::String::ConstPtr& voiceCmd)
 {
+        ROS_INFO("in callback");
+   //tell the action client that we want to spin a thread by default
+        MoveBaseClient ac("move_base", true);
 
-    geometry_msgs::PoseStamped goal;
+        //wait for the action server to come up
+        while(!ac.waitForServer(ros::Duration(5.0))){
+          ROS_INFO("Waiting for the move_base action server to come up");
+        }
 
-    goal.header.frame_id = "/map";
-    goal.header.stamp = ros::Time::now() ;
+    move_base_msgs::MoveBaseGoal goal;
+    goal.target_pose.header.frame_id = "base_link";
+    goal.target_pose.header.stamp = ros::Time::now();
+
+    //geometry_msgs::PoseStamped goal;
+
 
 
     // autonomy mode choice
     if (voiceCmd->data == "right")
     {
-        goal.pose.position.x = pose_.pose.pose.position.x ;
-        goal.pose.position.y = pose_.pose.pose.position.y - 1;
-        goal.pose.orientation.z = pose_.pose.pose.orientation.z;
+        goal.target_pose.pose.position.y = 1.0;
+        goal.target_pose.pose.orientation.w = 1.0;
 
-        goal_pub_.publish(goal);
+        ROS_INFO("Sending goal");
+        ac.sendGoal(goal);
+
+        ac.waitForResult();
+
+        if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+          ROS_INFO("Hooray, I moved 1 meter forward");
+        else
+          ROS_INFO("The base failed to move forward 1 meter for some reason");
     }
     if (voiceCmd->data == "left")
     {
-        goal.pose.position.x = pose_.pose.pose.position.x;
-        goal.pose.position.y = pose_.pose.pose.position.y + 1;
-        goal.pose.orientation.z = pose_.pose.pose.orientation.z;
+        goal.target_pose.pose.position.y = -1.0;
+        goal.target_pose.pose.orientation.w = 1.0;
 
-        goal_pub_.publish(goal);
+        ROS_INFO("Sending goal");
+        ac.sendGoal(goal);
+
+        ac.waitForResult();
+
+        if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+          ROS_INFO("Hooray, I moved 1 meter forward");
+        else
+          ROS_INFO("The base failed to move forward 1 meter for some reason");
     }
     if (voiceCmd->data == "forward")
     {
-        goal.pose.position.x = pose_.pose.pose.position.x + 1;
-        goal.pose.position.y = pose_.pose.pose.position.y;
-        goal.pose.orientation.z = pose_.pose.pose.orientation.z;
+        ROS_INFO("in forward");
+        //goal.pose.position.x = pose_.pose.pose.position.x + 1;
+        //goal.pose.position.y = pose_.pose.pose.position.y;
+        //goal.pose.orientation.z = pose_.pose.pose.orientation.z;
 
-        goal_pub_.publish(goal);
+        //goal_pub_.publish(goal);
+
+        goal.target_pose.pose.position.x = 1.0;
+        goal.target_pose.pose.orientation.w = 1.0;
+
+        ROS_INFO("Sending goal");
+        ac.sendGoal(goal);
+
+        ac.waitForResult();
+
+        if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+          ROS_INFO("Hooray, I moved 1 meter forward");
+        else
+          ROS_INFO("The base failed to move forward 1 meter for some reason");
     }
 
     if (voiceCmd->data == "backward")
     {
-        goal.pose.position.x = pose_.pose.pose.position.x - 1;
-        goal.pose.position.y = pose_.pose.pose.position.y;
-        goal.pose.orientation.z = pose_.pose.pose.orientation.z;
+        goal.target_pose.pose.position.x = -1.0;
+        goal.target_pose.pose.orientation.w = 1.0;
 
-        goal_pub_.publish(goal);
+        ROS_INFO("Sending goal");
+        ac.sendGoal(goal);
+
+        ac.waitForResult();
+
+        if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+          ROS_INFO("Hooray, I moved one meter backward");
+        else
+          ROS_INFO("The base failed to move forward 1 meter for some reason");
     }
 
 
@@ -155,11 +207,17 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "voice_teleop");
     VoiceTeleop voice_teleop;
+    ROS_INFO("startedAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa");
 
+
+
+    ros::NodeHandle n;
+    ros::Subscriber sub = n.subscribe("/recognizer/output", 1000, VoiceCmdCallback);
     ros::Rate r(10); // 10 hz
-    while (ros::ok())
-    {
-        ros::spinOnce();
-        r.sleep();
-    }
+    //while (ros::ok())
+    //{
+    //    ros::spinOnce();
+    //    r.sleep();
+   // }
+    ros::spin();
 }
