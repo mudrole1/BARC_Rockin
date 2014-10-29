@@ -10,7 +10,7 @@ Request/Response: &lt;topic&gt; &lt;message type&gt; &lt;(values)&gt;
 
 **navigation:**
 
-> Request: /navigation/request std_msgs/String (destination)
+> Request: /navigation/request std_msgs/String (destination)  
 > Response: /navigation/response std_msgs/Int32 (-1 = Unknown destination, 0 = Failed, 1 = Succeeded)
 
 
@@ -19,7 +19,7 @@ Request/Response: &lt;topic&gt; &lt;message type&gt; &lt;(values)&gt;
 
 **recognition:**
 
-> Request: /recognition/request std_msgs/Empty
+> Request: /recognition/request std_msgs/Empty  
 > Response: /recognition/response std_msgs/String (Doctor, Deliman, Postman, Unknown, No Face)
 
 
@@ -28,7 +28,7 @@ Request/Response: &lt;topic&gt; &lt;message type&gt; &lt;(values)&gt;
 
 **wait_for_postman:**
 
-> Request: /wait_for_postman/request std_msgs/Empty
+> Request: /wait_for_postman/request std_msgs/Empty  
 > Response: /wait_for_postman/response std_msgs/Empty
 
 
@@ -37,7 +37,7 @@ Request/Response: &lt;topic&gt; &lt;message type&gt; &lt;(values)&gt;
 
 **wait_for_doctor:**
 
-> Request: /wait_for_doctor/request std_msgs/Empty
+> Request: /wait_for_doctor/request std_msgs/Empty  
 > Response: /wait_for_doctor/response std_msgs/Empty
 
 
@@ -45,7 +45,7 @@ Request/Response: &lt;topic&gt; &lt;message type&gt; &lt;(values)&gt;
 
 
 **wait_for_deliman:**
-> Request: /wait_for_deliman/request std_msgs/Empty
+> Request: /wait_for_deliman/request std_msgs/Empty  
 > Response: /wait_for_deliman/response std_msgs/Empty
 
 
