@@ -242,7 +242,7 @@ class DelimanWait(smach.State):
     def execute(self, userdata):
         self.executed = False
 
-        run_pub.publish()
+        self.run_pub.publish()
 
         if DEBUG:
             self.executed = True
