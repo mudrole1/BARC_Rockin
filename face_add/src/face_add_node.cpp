@@ -15,7 +15,7 @@ void PrintError( int ErrorID );
 void ImageCallback( const sensor_msgs::Image::ConstPtr& msg );
 void FaceDetectAndDraw( Mat& img, Mat& face, CascadeClassifier& cascade, CascadeClassifier& nestedCascade, double scale, bool tryflip );
 
-const int N_SAMPLES = 5;
+const int N_SAMPLES = 20;
 const int ERROR_ARG = 1;
 const int ERROR_MANYHUMANS = 2;
 const string DATASET_FOLDER_NAME = "face_dataset";

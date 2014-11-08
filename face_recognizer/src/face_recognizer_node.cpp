@@ -2,6 +2,7 @@
 #include "sensor_msgs/Image.h"
 #include "sensor_msgs/image_encodings.h"
 #include "std_msgs/String.h"
+#include "std_msgs/Empty.h"
 #include "cv_bridge/cv_bridge.h"
 #include "opencv2/opencv.hpp"
 #include <iostream>
@@ -33,24 +34,37 @@ static void read_csv(const string& filename, vector<Mat>& images, vector<int>& l
 
 void PrintError( int ErrorID );
 void ImageCallback( const sensor_msgs::Image::ConstPtr& msg );
-void WakeUpCallback( const std_msgs::String::ConstPtr& msg );
+void WakeUpCallback( const std_msgs::Empty::ConstPtr& msg );
+bool RecognitionFinished();
 
 
 const int N_SAMPLES = 5; // Number of recognizing loops
 const int ERROR_ARG = 1;
+const int ERROR_CLASS_ID = 2;
 const string DATASET_FOLDER_NAME = "face_dataset";
 const int N_ARGS = 2; //<PathCascadeFILE> <PathCSVFILE>
-const int THRESHOLD_CUT = 100;
+const int THRESHOLD_CUT = 50;
+const int FACE_THRESHOLD = 400;
+const int DOCTOR_ID = 0;
+const int MAX_CLASSES = 20;
+const double FACE_TIMEOUT = 2;
+const double UNKNOWN_TIMEOUT = 7;
+const int DETECTION_THRESHOLD = 5;
+
 int RecLoopCount; // The count of the recognizing loops performed...
 string PathCascade;
 string PathCSV;
 CascadeClassifier haar_cascade; // Face detection to be built
-Ptr<FaceRecognizer> model; // Face recognizer (classifier to e built)
+Ptr<FaceRecognizer> model; // Face recognizer (classifier to be built)
 int im_width;
 int im_height;
 bool IsThereAFace;
 string MsgToPublish;
 bool RunFaceRecognition;
+ros::Time last_face;
+ros::Time last_doctor;
+int detections[MAX_CLASSES];
+
 
 
 int main( int argc, char **argv ){
@@ -95,25 +109,42 @@ int main( int argc, char **argv ){
   // Init ros node
   ros::init( argc, argv, "face_recognizer_node" );
   ros::NodeHandle n;  
-  ros::Publisher  node_pub = n.advertise <std_msgs::String>("face_recognizer_ID", 2);
-  ros::Subscriber node_sub = n.subscribe( "/camera/image_raw", 2, ImageCallback );
-  ros::Subscriber node_sub_WakeUp = n.subscribe( "/face_rec_wakeup", 2, WakeUpCallback );
+  ros::Publisher color_detection_pub = n.advertise <std_msgs::Empty>("color_detect/start", 2);
+  ros::Publisher node_pub = n.advertise <std_msgs::String>("recognition/response", 2);
+  ros::Subscriber image_sub = n.subscribe( "/camera/image_raw", 2, ImageCallback );
+  ros::Subscriber request_sub = n.subscribe( "/recognition/request", 2, WakeUpCallback );
 
-  RecLoopCount = 0;
+
   RunFaceRecognition = false;
   IsThereAFace = false;
 
   std_msgs::String msg;
 
   while( ros::ok() ){
-    if( RecLoopCount > N_SAMPLES )
-      ros::shutdown();
-    if( IsThereAFace == true  && RunFaceRecognition == true ){
-      //msg.data = MsgToPublish;
-      msg.data = "Doctor";
-      node_pub.publish( msg );
-      RunFaceRecognition = false;
+    if(RunFaceRecognition) {
+        if(RecognitionFinished()) {
+          RunFaceRecognition = false;
+
+          if (MsgToPublish == "Unknown") {
+          std_msgs::Empty color_detection_msg;
+          color_detection_pub.publish(color_detection_msg);
+          } else {
+            std_msgs::String result_msg;
+            result_msg.data = MsgToPublish;
+            node_pub.publish( result_msg );
+          }
+        } else if((ros::Time::now() - last_face) > ros::Duration(FACE_TIMEOUT)) {
+          RunFaceRecognition = false;
+          std_msgs::String result_msg;
+          result_msg.data = "No Face";
+          node_pub.publish( result_msg );
+        } else if((ros::Time::now() - last_doctor) > ros::Duration(UNKNOWN_TIMEOUT)) {
+          RunFaceRecognition = false;
+          std_msgs::Empty color_detection_msg;
+          color_detection_pub.publish(color_detection_msg);
+        }
     }
+
     ros::spinOnce();
   }
 
@@ -121,9 +152,14 @@ int main( int argc, char **argv ){
 }
 
 
-void WakeUpCallback( const std_msgs::String::ConstPtr& msg ){
-  if( ( msg->data ).compare( "DoFaceRecognition" ) == 0 )
+void WakeUpCallback( const std_msgs::Empty::ConstPtr& msg ){
     RunFaceRecognition = true;
+    std::fill(detections, detections+MAX_CLASSES, 0);
+    last_face = ros::Time::now();
+
+    if (MsgToPublish != "No Face") {
+      last_doctor = ros::Time::now();
+    }
 }
 
 
@@ -181,25 +217,25 @@ void ImageCallback( const sensor_msgs::Image::ConstPtr& msg ){
 	BestHuman_confidence = confidence;
 	BestHuman_prediction = prediction;
       }
-      // cout << prediction << "-" << confidence << " ";
-      // if( confidence > 123 )
-      //   prediction = 4;
     }
     
     if( BestHuman_confidence != -1 ){ // We have found at least one face to compare.
       IsThereAFace = true;
-      if( BestHuman_confidence < THRESHOLD_CUT ){
-	MsgToPublish = "Doctor";
-	// cout << "MARCO :: ";
-	// cout << BestHuman_prediction << "-" << BestHuman_confidence << " ";
-	// cout << endl;
+
+      if(BestHuman_confidence < FACE_THRESHOLD) {
+        last_face = ros::Time::now();
       }
-      else{
-	MsgToPublish = "Unknown";      
-	// cout << "ANY   :: ";
-	// cout << BestHuman_prediction << "-" << BestHuman_confidence << " ";
-	// cout << endl;
+
+      if(BestHuman_confidence < THRESHOLD_CUT) {
+        if (BestHuman_prediction < MAX_CLASSES) {
+          detections[BestHuman_prediction]++;
+        } else {
+          PrintError(ERROR_CLASS_ID);
+        }
       }
+
+
+      cout << BestHuman_prediction << "-" << BestHuman_confidence << endl;
     }
   }
   
@@ -212,10 +248,37 @@ void PrintError( int ErrorID ){
     cout << "ERROR: You need to run this program with the following arguments:" << endl;
     cout << "    rosrun face_recognizer face_recognizer_node <PathCascadeFILE> <PathCVSFILE>" << endl;
     break;
+  case ERROR_CLASS_ID:
+    cout << "ERROR: Invalid class ID" << endl;
+    break;
     cout << "ERROR: Non recognized error ocurred!" << endl;
     break;
   }
 }
 
+bool RecognitionFinished() {
+  int max = -1;
+  int max_i = -1;
 
+  for (int i=0;i<MAX_CLASSES;i++) {
+//    cout << detections[i] << " ";
+    if (detections[i] > max) {
+      max_i = i;
+      max = detections[i];
+    }
+  }
+
+//  cout << endl;
+
+  if (max >= DETECTION_THRESHOLD) {
+    MsgToPublish = max_i == DOCTOR_ID ? "Doctor" : "Unknown";
+
+    if (max_i == DOCTOR_ID) {
+      last_doctor = ros::Time::now();
+    }
+    return true;
+  }
+
+  return false;
+}
 

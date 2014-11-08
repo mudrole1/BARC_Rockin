@@ -125,7 +125,7 @@ void detect(const sensor_msgs::ImageConstPtr& img) {
 				cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5)));
 		cv::imshow("normal", cv_ptr->image);
 		cv::imshow("deliman", thresholdedImg);
-		cv::waitKey(5000);
+		cv::waitKey(1000);
 		cv::Moments moment = cv::moments(thresholdedImg);
 		double delimanArea = moment.m00;
 		std::cout << delimanArea << " deliman area\n";
@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
 	ros::init(argc, argv, "color_detector");
 	ros::NodeHandle n;
 	cameraInit(n);
-	ros::Subscriber node_sub = n.subscribe("/usb_cam/image_raw", 1, detect);
+	ros::Subscriber node_sub = n.subscribe("/camera/image_raw", 1, detect);
 	ros::Subscriber startDetect = n.subscribe("/color_detect/start", 1, start);
 	ros::spin();
 	return 0;
