@@ -21,6 +21,9 @@ DOCTOR_WAIT_MESSAGE = 'I will wait here'
 FOLLOW_MESSAGE = 'Please follow me'
 BYE_MESSAGE = 'Thank you. Good bye'
 UNRECOGNISED_PERSON_MESSAGE = 'Hello visitor. Who are you and what is the purpose of your visit?'
+ARE_YOU_MESSAGE = 'Are you '
+YES_NO_MESSAGE = 'Please answer with yes or no.'
+ARE_YOU_EXPECTED_MESSAGE = 'Is Granny Annie expecting you?'
 
 class Listen(smach.State):
     def __init__(self):
@@ -58,16 +61,16 @@ class Navigation(smach.State):
         self.executed = False
 
         if DEBUG:
-            self.result = 1
+            self.result = 3
             self.executed = True
 
         self.run_pub.publish(Navigation.destination)
 
         while not rospy.is_shutdown():
             if self.executed:
-                if self.result == 1:
+                if self.result == 3:
                     return Navigation.next_state
-                elif self.result == 0:
+                elif self.result == 2 or self.result == 4:
                     return 'Failed'
                 elif self.result == -1:
                     rospy.logerr('Unknown Destination: ' + Navigation.destination)
@@ -82,7 +85,7 @@ class Navigation(smach.State):
 		
 class Recognition(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['Doctor','Deliman','Postman','Unknown','No Face','Unrecognised'])
+        smach.State.__init__(self, outcomes=['Doctor','Deliman','Postman','Unknown','No Face','Unrecognised','Unsure'])
         self.run_pub = rospy.Publisher("/recognition/request", Empty)
         self.stop_pub = rospy.Publisher("/recognition/stop", Empty)
         self.result_sub = rospy.Subscriber("/recognition/response", String, self.result_cb)
@@ -99,10 +102,15 @@ class Recognition(smach.State):
 
         while not rospy.is_shutdown():
             if self.executed:
-                if self.person in ('Doctor','Deliman','Postman'): # Camera successfully recognised the person
+                if self.person in ('Doctor'): # Camera successfully recognised the person
                     Recognition.unknown_count = 0
                     self.stop_pub.publish()
                     return self.person
+                elif self.person in ('Deliman','Postman'): # Camera is unsure about the recognised person
+                    ConfirmRecognition.person = self.person
+                    self.stop_pub.publish()
+                    self.confirm_speech()
+                    return 'Unsure'
                 elif self.person == 'No Face': # Person is not facing the camera
                     Speech.msg = FACE_CAMERA_MESSAGE
                     Speech.next_state = 'RECOGNITION'
@@ -111,9 +119,11 @@ class Recognition(smach.State):
                     self.stop_pub.publish()
                     return 'Unknown'
                 elif self.speech_received and rospy.get_rostime() - self.last_speech < rospy.Duration(5.0) and self.speech_person in ('Doctor','Deliman','Postman','Unknown'): # Camera doesn't recognise the person but speech has a response
-                  Recognition.unknown_count = 0
-                  self.stop_pub.publish()
-                  return self.speech_person
+                    Recognition.unknown_count = 0
+                    ConfirmRecognition.person = self.speech_person
+                    self.stop_pub.publish()
+                    self.confirm_speech()
+                    return 'Unsure'
                 else: # Person not recognised, try another loop
                     Recognition.unknown_count += 1
                     Speech.msg = UNRECOGNISED_PERSON_MESSAGE
@@ -128,11 +138,56 @@ class Recognition(smach.State):
 
     def speech_result_cb(self, msg):
         self.speech_person = msg.data
+        self.last_speech = rospy.get_rostime()
         self.speech_received = True
+
+    def confirm_speech(self):
+        if ConfirmRecognition.person == 'Unknown':
+            Speech.msg = (ARE_YOU_EXPECTED_MESSAGE + ' ' + YES_NO_MESSAGE)
+        elif ConfirmRecognition.person == 'Doctor':
+            Speech.msg = (ARE_YOU_MESSAGE + 'Doctor Kimble? ' + YES_NO_MESSAGE)
+        elif ConfirmRecognition.person == 'Deliman':
+            Speech.msg = (ARE_YOU_MESSAGE + 'the deli man? ' + YES_NO_MESSAGE)
+        elif ConfirmRecognition.person == 'Postman':
+            Speech.msg = (ARE_YOU_MESSAGE + 'the post man? ' + YES_NO_MESSAGE)
+        else:
+            rospy.error('Unknown person: ' + ConfirmRecognition.person)
+
+        Speech.next_state = 'CONFIRM_RECOGNITION'
+
+class ConfirmRecognition(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['Doctor','Postman','Deliman','Unknown','Unsure','Unrecognised'])
+        self.run_pub = rospy.Publisher("/speech_rec/confirmation/request", Empty)
+        self.result_sub = rospy.Subscriber("/speech_rec/confirmation/response", Int32, self.result_cb)
+
+    def execute(self, userdata):
+        log('In state CONFIRM_RECOGNITION')
+
+        self.executed = False
+
+        while not rospy.is_shutdown():
+            if self.executed:
+                if self.result == -1: # Speech confirmation node was unsure what was said
+                    return 'Unsure'
+                elif ConfirmRecognition.person == 'Unknown':
+                    if self.result == 1:
+                        return 'Unrecognised' # Person is not unknown person, return to recognition
+                    else:
+                        return 'Unknown' # Person is unknown person
+                else:
+                    if self.result == 1:
+                        return ConfirmRecognition.person # Person is as believed
+                    else:
+                        return 'Unrecognised' # Person is not as believed, return to recognition
+
+    def result_cb(self, msg):
+        self.result = msg.data
+        self.executed = True
 
 class Speech(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['NAVIGATION','RECOGNITION','LISTEN','POSTMAN_ENTERED','POSTMAN_WAIT','DELIMAN_ENTERED','DELIMAN_WAIT','DOCTOR_ENTERED','DOCTOR_WAIT'])
+        smach.State.__init__(self, outcomes=['NAVIGATION','RECOGNITION','LISTEN','POSTMAN_ENTERED','POSTMAN_WAIT','DELIMAN_ENTERED','DELIMAN_WAIT','DOCTOR_ENTERED','DOCTOR_WAIT','CONFIRM_RECOGNITION'])
 
     def execute(self, userdata):
         log('In state SPEECH. Message: ' + Speech.msg)
@@ -352,8 +407,9 @@ def main():
     with sm:
         smach.StateMachine.add('LISTEN', Listen(), transitions={'Bell':'NAVIGATION'})
         smach.StateMachine.add('NAVIGATION', Navigation(), transitions={'SPEECH':'SPEECH','RECOGNITION':'RECOGNITION','DELIMAN_IN_KITCHEN':'DELIMAN_IN_KITCHEN','DOCTOR_IN_BEDROOM':'DOCTOR_IN_BEDROOM','BYE':'BYE','Failed':'NAVIGATION','Unknown':'END'})
-        smach.StateMachine.add('RECOGNITION', Recognition(), transitions={'Doctor':'DOCTOR','Deliman':'DELIMAN','Postman':'POSTMAN','Unknown':'UNKNOWN_PERSON','Unrecognised':'SPEECH','No Face':'SPEECH'})
-        smach.StateMachine.add('SPEECH', Speech(), transitions={'NAVIGATION':'NAVIGATION','RECOGNITION':'RECOGNITION','LISTEN':'LISTEN','POSTMAN_ENTERED':'POSTMAN_ENTERED','POSTMAN_WAIT':'POSTMAN_WAIT','DELIMAN_ENTERED':'DELIMAN_ENTERED','DELIMAN_WAIT':'DELIMAN_WAIT','DOCTOR_ENTERED':'DOCTOR_ENTERED','DOCTOR_WAIT':'DOCTOR_WAIT'})
+        smach.StateMachine.add('RECOGNITION', Recognition(), transitions={'Doctor':'DOCTOR','Deliman':'DELIMAN','Postman':'POSTMAN','Unknown':'UNKNOWN_PERSON','Unrecognised':'SPEECH','No Face':'SPEECH','Unsure':'SPEECH'})
+        smach.StateMachine.add('CONFIRM_RECOGNITION', ConfirmRecognition(), transitions={'Doctor':'DOCTOR','Deliman':'DELIMAN','Postman':'POSTMAN','Unknown':'UNKNOWN_PERSON','Unrecognised':'RECOGNITION','Unsure':'CONFIRM_RECOGNITION'})
+        smach.StateMachine.add('SPEECH', Speech(), transitions={'NAVIGATION':'NAVIGATION','RECOGNITION':'RECOGNITION','LISTEN':'LISTEN','POSTMAN_ENTERED':'POSTMAN_ENTERED','POSTMAN_WAIT':'POSTMAN_WAIT','DELIMAN_ENTERED':'DELIMAN_ENTERED','DELIMAN_WAIT':'DELIMAN_WAIT','DOCTOR_ENTERED':'DOCTOR_ENTERED','DOCTOR_WAIT':'DOCTOR_WAIT','CONFIRM_RECOGNITION':'CONFIRM_RECOGNITION'})
         smach.StateMachine.add('DOCTOR', Doctor(), transitions={'NAVIGATION':'NAVIGATION'})
         smach.StateMachine.add('DELIMAN', Deliman(), transitions={'NAVIGATION':'NAVIGATION'})
         smach.StateMachine.add('POSTMAN', Postman(), transitions={'NAVIGATION':'NAVIGATION'})
