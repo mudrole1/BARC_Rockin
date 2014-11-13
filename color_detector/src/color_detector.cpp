@@ -40,8 +40,8 @@ void init(ros::NodeHandle n) {
 		if (std::strcmp(lineIn.c_str(), "Deliman") == 0) {
 			std::getline(inFile, lineIn);
 			int i = 0;
-			while (std::strcmp(lineIn.c_str(), "Stop")) {
-				ROS_INFO("READ LINE: %s", lineIn.c_str());
+			while (std::strcmp(lineIn.c_str(), "Stop") != 0) {
+				ROS_INFO("READ LINE INNER: %s", lineIn.c_str());
 				deliman[i] = atoi(lineIn.c_str());
 				i++;
 				std::getline(inFile, lineIn);
@@ -50,6 +50,7 @@ void init(ros::NodeHandle n) {
 			std::getline(inFile, lineIn);
 			int i = 0;
 			while (std::strcmp(lineIn.c_str(), "Stop")) {
+				ROS_INFO("READ LINE INNER: %s", lineIn.c_str());
 				postman[i] = atoi(lineIn.c_str());
 				i++;
 				std::getline(inFile, lineIn);
@@ -81,7 +82,7 @@ void init(ros::NodeHandle n) {
 
 void cameraInit(ros::NodeHandle n) {
 	init(n);
-	cv::namedWindow("Calibrate Deliman", CV_WINDOW_AUTOSIZE);
+	cv::namedWindow("Calibrate Deliman", CV_WINDOW_NORMAL);
 	cv::createTrackbar("LowR", "Calibrate Deliman", &deliman[2], 255); //Hue (0 - 179)
 	cv::createTrackbar("HighR", "Calibrate Deliman", &deliman[5], 255);
 
@@ -91,7 +92,7 @@ void cameraInit(ros::NodeHandle n) {
 	cv::createTrackbar("LowB", "Calibrate Deliman", &deliman[0], 255); //Value (0 - 255)
 	cv::createTrackbar("HighB", "Calibrate Deliman", &deliman[3], 255);
 
-	cv::namedWindow("Calibrate Postman", CV_WINDOW_AUTOSIZE);
+	cv::namedWindow("Calibrate Postman", CV_WINDOW_NORMAL);
 	cv::createTrackbar("LowR", "Calibrate Postman", &postman[2], 255); //Hue (0 - 179)
 	cv::createTrackbar("HighR", "Calibrate Postman", &postman[5], 255);
 
@@ -99,7 +100,7 @@ void cameraInit(ros::NodeHandle n) {
 	cv::createTrackbar("HighG", "Calibrate Postman", &postman[4], 255);
 
 	cv::createTrackbar("LowB", "Calibrate Postman", &postman[0], 255); //Value (0 - 255)
-	cv::createTrackbar("HighB", "Calibrate Postman", &postman[1], 255);
+	cv::createTrackbar("HighB", "Calibrate Postman", &postman[3], 255);
 
 }
 
@@ -253,6 +254,8 @@ void start(const std_msgs::EmptyConstPtr& empty) {
 		}
 		outFile <<"Stop\n";
 	}
+	cv::destroyAllWindows();
+	cv::startWindowThread();
 
 }
 
@@ -260,7 +263,7 @@ int main(int argc, char **argv) {
 	ros::init(argc, argv, "color_detector");
 	ros::NodeHandle n;
 	cameraInit(n);
-	ros::Subscriber node_sub = n.subscribe("/usb_cam/image_raw", 1, detect);
+	ros::Subscriber node_sub = n.subscribe("/camera/image_raw", 1, detect);
 	ros::Subscriber startDetect = n.subscribe("/color_detect/start", 1, start);
 	ros::spin();
 	return 0;
