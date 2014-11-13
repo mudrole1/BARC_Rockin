@@ -1,0 +1,15 @@
+<launch>
+
+  <node name="recognizer2" pkg="pocketsphinx" type="recognizer.py" output="screen">
+    <param name="lm" value="$(find speech_rec)/files/task2.lm"/>
+    <param name="dict" value="$(find speech_rec)/files/task2.dic"/>
+  </node>
+
+  <node name="recognizerYN" pkg="pocketsphinx" type="recognizer.py" output="screen">
+    <param name="lm" value="$(find speech_rec)/files/yesno.lm"/>
+    <param name="dict" value="$(find speech_rec)/files/yesno.dic"/>
+  </node>
+
+
+
+</launch>

@@ -1,0 +1,6 @@
+<launch>
+
+  <node name="speech_recognition" pkg="speech_rec" type="speech_rec" output="screen" args="2">
+  </node>
+
+</launch>
