@@ -1,0 +1,15 @@
+Needed to log:
+	Over ros publishers while running:
+		The starting command/event (bell)
+		Robot notifications (alarm for anomalous behaviour, anything else ?)
+		Results of identification
+	Rosbagged:
+		By us:
+			Pose2D (and optional Pose) of robot
+			Audio from mic
+			Pointcloud from kinect
+		Provided by them:
+			Image from door cam
+			Accurate pose of robot during trail
+			Results from any action robot takes
+
