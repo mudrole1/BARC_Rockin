@@ -5,6 +5,7 @@ import smach
 import smach_ros
 import os
 from std_msgs.msg import Empty, Int32, Bool, String, Float64MultiArray
+from speech.srv import *
 
 speech_pub = rospy.Publisher("/speech", String)
 
@@ -112,8 +113,8 @@ class Recognition(smach.State):
                     self.confirm_speech()
                     return 'Unsure'
                 elif self.person == 'No Face': # Person is not facing the camera
-                    Speech.msg = FACE_CAMERA_MESSAGE
-                    Speech.next_state = 'RECOGNITION'
+                    SpeechState.msg = FACE_CAMERA_MESSAGE
+                    SpeechState.next_state = 'RECOGNITION'
                     return self.person
                 elif Recognition.unknown_count > 2: # Person has not been recognised after > 2 recognition loops, assume unknown person
                     self.stop_pub.publish()
@@ -126,8 +127,8 @@ class Recognition(smach.State):
                     return 'Unsure'
                 else: # Person not recognised, try another loop
                     Recognition.unknown_count += 1
-                    Speech.msg = UNRECOGNISED_PERSON_MESSAGE
-                    Speech.next_state = 'RECOGNITION'
+                    SpeechState.msg = UNRECOGNISED_PERSON_MESSAGE
+                    SpeechState.next_state = 'RECOGNITION'
                     return 'Unrecognised'
             else:
                 rospy.sleep(0.2)
@@ -143,17 +144,17 @@ class Recognition(smach.State):
 
     def confirm_speech(self):
         if ConfirmRecognition.person == 'Unknown':
-            Speech.msg = (ARE_YOU_EXPECTED_MESSAGE + ' ' + YES_NO_MESSAGE)
+            SpeechState.msg = (ARE_YOU_EXPECTED_MESSAGE + ' ' + YES_NO_MESSAGE)
         elif ConfirmRecognition.person == 'Doctor':
-            Speech.msg = (ARE_YOU_MESSAGE + 'Doctor Kimble? ' + YES_NO_MESSAGE)
+            SpeechState.msg = (ARE_YOU_MESSAGE + 'Doctor Kimble? ' + YES_NO_MESSAGE)
         elif ConfirmRecognition.person == 'Deliman':
-            Speech.msg = (ARE_YOU_MESSAGE + 'the deli man? ' + YES_NO_MESSAGE)
+            SpeechState.msg = (ARE_YOU_MESSAGE + 'the deli man? ' + YES_NO_MESSAGE)
         elif ConfirmRecognition.person == 'Postman':
-            Speech.msg = (ARE_YOU_MESSAGE + 'the post man? ' + YES_NO_MESSAGE)
+            SpeechState.msg = (ARE_YOU_MESSAGE + 'the post man? ' + YES_NO_MESSAGE)
         else:
             rospy.error('Unknown person: ' + ConfirmRecognition.person)
 
-        Speech.next_state = 'CONFIRM_RECOGNITION'
+        SpeechState.next_state = 'CONFIRM_RECOGNITION'
 
 class ConfirmRecognition(smach.State):
     def __init__(self):
@@ -185,17 +186,17 @@ class ConfirmRecognition(smach.State):
         self.result = msg.data
         self.executed = True
 
-class Speech(smach.State):
+class SpeechState(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['NAVIGATION','RECOGNITION','LISTEN','POSTMAN_ENTERED','POSTMAN_WAIT','DELIMAN_ENTERED','DELIMAN_WAIT','DOCTOR_ENTERED','DOCTOR_WAIT','CONFIRM_RECOGNITION'])
 
     def execute(self, userdata):
-        log('In state SPEECH. Message: ' + Speech.msg)
+        log('In state SPEECH. Message: ' + SpeechState.msg)
 
-        say(Speech.msg)
+        say(SpeechState.msg)
         rospy.sleep(1)
 		
-        return Speech.next_state
+        return SpeechState.next_state
 
 class Doctor(smach.State):
     def __init__(self):
@@ -206,8 +207,8 @@ class Doctor(smach.State):
 
         Navigation.destination = 'Enter'
         Navigation.next_state = 'SPEECH'
-        Speech.msg = DOCTOR_HELLO_MESSAGE
-        Speech.next_state = 'DOCTOR_ENTERED'
+        SpeechState.msg = DOCTOR_HELLO_MESSAGE
+        SpeechState.next_state = 'DOCTOR_ENTERED'
 		
         return 'NAVIGATION'
 
@@ -220,8 +221,8 @@ class Deliman(smach.State):
 
         Navigation.destination = 'Enter'
         Navigation.next_state = 'SPEECH'
-        Speech.msg = DELIMAN_HELLO_MESSAGE
-        Speech.next_state = 'DELIMAN_ENTERED'
+        SpeechState.msg = DELIMAN_HELLO_MESSAGE
+        SpeechState.next_state = 'DELIMAN_ENTERED'
 		
         return 'NAVIGATION'
 
@@ -234,8 +235,8 @@ class Postman(smach.State):
 
         Navigation.destination = 'Enter'
         Navigation.next_state = 'SPEECH'
-        Speech.msg = POSTMAN_HELLO_MESSAGE
-        Speech.next_state = 'POSTMAN_ENTERED'
+        SpeechState.msg = POSTMAN_HELLO_MESSAGE
+        SpeechState.next_state = 'POSTMAN_ENTERED'
 		
         return 'NAVIGATION'
 
@@ -246,8 +247,8 @@ class UnknownPerson(smach.State):
     def execute(self, userdata):
         log('Unknown person detected')
 
-        Speech.msg = UNKNOWN_GO_AWAY_MESSAGE
-        Speech.next_state = 'LISTEN'
+        SpeechState.msg = UNKNOWN_GO_AWAY_MESSAGE
+        SpeechState.next_state = 'LISTEN'
 		
         return 'Speech'
 
@@ -257,8 +258,8 @@ class PostmanEntered(smach.State):
 
     def execute(self, userdata):
 
-        Speech.msg = POSTMAN_LEAVE_POST_MESSAGE
-        Speech.next_state = 'POSTMAN_WAIT'
+        SpeechState.msg = POSTMAN_LEAVE_POST_MESSAGE
+        SpeechState.next_state = 'POSTMAN_WAIT'
 		
         return 'Speech'
 
@@ -291,8 +292,8 @@ class DelimanEntered(smach.State):
 
     def execute(self, userdata):
 
-        Speech.msg = FOLLOW_MESSAGE
-        Speech.next_state = 'NAVIGATION'
+        SpeechState.msg = FOLLOW_MESSAGE
+        SpeechState.next_state = 'NAVIGATION'
         Navigation.destination = 'Kitchen'
         Navigation.next_state = 'DELIMAN_IN_KITCHEN'
 		
@@ -304,8 +305,8 @@ class DelimanInKitchen(smach.State):
 
     def execute(self, userdata):
 
-        Speech.msg = DELIMAN_BREAKFAST_MESSAGE
-        Speech.next_state = 'DELIMAN_WAIT'
+        SpeechState.msg = DELIMAN_BREAKFAST_MESSAGE
+        SpeechState.next_state = 'DELIMAN_WAIT'
 		
         return 'Speech'
 
@@ -325,8 +326,8 @@ class DelimanWait(smach.State):
 
         while not rospy.is_shutdown():
             if self.executed:
-                Speech.msg = FOLLOW_MESSAGE
-                Speech.next_state = 'NAVIGATION'
+                SpeechState.msg = FOLLOW_MESSAGE
+                SpeechState.next_state = 'NAVIGATION'
                 Navigation.destination = 'Enter'
                 Navigation.next_state = 'BYE'
                 return 'Leaving'
@@ -342,8 +343,8 @@ class DoctorEntered(smach.State):
 
     def execute(self, userdata):
 
-        Speech.msg = FOLLOW_MESSAGE
-        Speech.next_state = 'NAVIGATION'
+        SpeechState.msg = FOLLOW_MESSAGE
+        SpeechState.next_state = 'NAVIGATION'
         Navigation.destination = 'Bedroom'
         Navigation.next_state = 'DOCTOR_IN_BEDROOM'
 		
@@ -355,8 +356,8 @@ class DoctorInBedroom(smach.State):
 
     def execute(self, userdata):
 
-        Speech.msg = DOCTOR_WAIT_MESSAGE
-        Speech.next_state = 'DOCTOR_WAIT'
+        SpeechState.msg = DOCTOR_WAIT_MESSAGE
+        SpeechState.next_state = 'DOCTOR_WAIT'
 		
         return 'Speech'
 
@@ -376,8 +377,8 @@ class DoctorWait(smach.State):
 
         while not rospy.is_shutdown():
             if self.executed:
-                Speech.msg = FOLLOW_MESSAGE
-                Speech.next_state = 'NAVIGATION'
+                SpeechState.msg = FOLLOW_MESSAGE
+                SpeechState.next_state = 'NAVIGATION'
                 Navigation.destination = 'Enter'
                 Navigation.next_state = 'BYE'
                 return 'Leaving'
@@ -394,8 +395,8 @@ class Bye(smach.State):
     def execute(self, userdata):
         log('In state BYE')
 
-        Speech.msg = BYE_MESSAGE
-        Speech.next_state = 'LISTEN'
+        SpeechState.msg = BYE_MESSAGE
+        SpeechState.next_state = 'LISTEN'
 		
         return 'Speech'
 	
@@ -409,7 +410,7 @@ def main():
         smach.StateMachine.add('NAVIGATION', Navigation(), transitions={'SPEECH':'SPEECH','RECOGNITION':'RECOGNITION','DELIMAN_IN_KITCHEN':'DELIMAN_IN_KITCHEN','DOCTOR_IN_BEDROOM':'DOCTOR_IN_BEDROOM','BYE':'BYE','Failed':'NAVIGATION','Unknown':'END'})
         smach.StateMachine.add('RECOGNITION', Recognition(), transitions={'Doctor':'DOCTOR','Deliman':'DELIMAN','Postman':'POSTMAN','Unknown':'UNKNOWN_PERSON','Unrecognised':'SPEECH','No Face':'SPEECH','Unsure':'SPEECH'})
         smach.StateMachine.add('CONFIRM_RECOGNITION', ConfirmRecognition(), transitions={'Doctor':'DOCTOR','Deliman':'DELIMAN','Postman':'POSTMAN','Unknown':'UNKNOWN_PERSON','Unrecognised':'RECOGNITION','Unsure':'CONFIRM_RECOGNITION'})
-        smach.StateMachine.add('SPEECH', Speech(), transitions={'NAVIGATION':'NAVIGATION','RECOGNITION':'RECOGNITION','LISTEN':'LISTEN','POSTMAN_ENTERED':'POSTMAN_ENTERED','POSTMAN_WAIT':'POSTMAN_WAIT','DELIMAN_ENTERED':'DELIMAN_ENTERED','DELIMAN_WAIT':'DELIMAN_WAIT','DOCTOR_ENTERED':'DOCTOR_ENTERED','DOCTOR_WAIT':'DOCTOR_WAIT','CONFIRM_RECOGNITION':'CONFIRM_RECOGNITION'})
+        smach.StateMachine.add('SPEECH', SpeechState(), transitions={'NAVIGATION':'NAVIGATION','RECOGNITION':'RECOGNITION','LISTEN':'LISTEN','POSTMAN_ENTERED':'POSTMAN_ENTERED','POSTMAN_WAIT':'POSTMAN_WAIT','DELIMAN_ENTERED':'DELIMAN_ENTERED','DELIMAN_WAIT':'DELIMAN_WAIT','DOCTOR_ENTERED':'DOCTOR_ENTERED','DOCTOR_WAIT':'DOCTOR_WAIT','CONFIRM_RECOGNITION':'CONFIRM_RECOGNITION'})
         smach.StateMachine.add('DOCTOR', Doctor(), transitions={'NAVIGATION':'NAVIGATION'})
         smach.StateMachine.add('DELIMAN', Deliman(), transitions={'NAVIGATION':'NAVIGATION'})
         smach.StateMachine.add('POSTMAN', Postman(), transitions={'NAVIGATION':'NAVIGATION'})
@@ -434,7 +435,13 @@ def log(msg):
     rospy.loginfo(msg)
 	
 def say(msg):
-    speech_pub.publish(msg)
+    rospy.wait_for_service('speech')
+
+    try:
+        speech = rospy.ServiceProxy('speech', Speech)
+        speech(String(msg))
+    except rospy.ServiceException, e:
+        print "Speech failed"
 
 if __name__ == '__main__':
     main()

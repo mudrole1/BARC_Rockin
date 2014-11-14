@@ -3,15 +3,17 @@
 import rospy
 import os
 from std_msgs.msg import String
+from speech.srv import *
 
 def main():
     rospy.init_node('speech')
-    speech_sub = rospy.Subscriber("/speech", String, speech_cb)
+    rospy.Service('speech', Speech, speech_cb)
     rospy.spin()
 
-def speech_cb(msg):
-    rospy.loginfo('Saying \"' + msg.data + '\"')
-    os.system( 'espeak --stdout \"' + msg.data + '\" | paplay' )
+def speech_cb(request):
+    rospy.loginfo('Saying \"' + request.message.data + '\"')
+    os.system( 'espeak --stdout \"' + request.message.data + '\" | paplay' )
+    return SpeechResponse()
 
 if __name__ == '__main__':
     main()

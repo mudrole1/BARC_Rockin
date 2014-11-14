@@ -11,7 +11,7 @@ Request/Response: &lt;topic&gt; &lt;message type&gt; &lt;(values)&gt;
 **navigation:**
 
 > Request: /navigation/request std_msgs/String (destination)  
-> Response: /navigation/response std_msgs/Int32 (-1 = Unknown destination, 0 = Failed, 1 = Succeeded)
+> Response: /navigation/response std_msgs/Int32 (-1 = Unknown destination, 2 = Cancelled, 3 = Succeeded, 4 = Aborted)
 
 
 ----------
